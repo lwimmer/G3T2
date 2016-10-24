@@ -1,5 +1,7 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.Blobstore;
 
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+
 import java.util.List;
 
 /**
