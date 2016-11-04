@@ -16,9 +16,10 @@ public interface IRAID {
      * Create a new file.
      *
      * @param storagefilename Name of the file
+     * @param data content of the file
      * @return true if sucessfully created
      */
-    boolean create(String storagefilename);
+    boolean create(String storagefilename, byte[] data);
 
     /**
      * Delete a file.
