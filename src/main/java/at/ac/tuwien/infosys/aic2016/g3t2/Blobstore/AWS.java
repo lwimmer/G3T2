@@ -29,7 +29,7 @@ public class AWS implements IBlobstore {
 	private Region usWest2 = null;
 	
 	//Constructor
-	AWS () {
+	public AWS() {
 		AWSCredentials credentials = null;
         try {
             credentials = new ProfileCredentialsProvider().getCredentials();
