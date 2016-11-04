@@ -35,7 +35,7 @@ public interface IRAID {
      * @param storagefilename Name of the file
      * @return the file as File
      */
-    File read(String storagefilename);
+    File read(String storagefilename) throws ItemMissingException;
 
     /**
      * Return a list of file names saved in the RAID.
