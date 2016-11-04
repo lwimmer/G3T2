@@ -7,11 +7,11 @@ public class Blob {
 	private String location;
 	
     public byte[] getData() {
-        throw new NotImplementedException();
+        return data;
     }
 
     public Location getLocation2() {
-        throw new NotImplementedException();
+        return new Location(location);
     }
 
 	public void setData(byte[] data) {
