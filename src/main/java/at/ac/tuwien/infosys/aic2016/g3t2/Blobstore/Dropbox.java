@@ -1,0 +1,206 @@
+package at.ac.tuwien.infosys.aic2016.g3t2.Blobstore;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.dropbox.core.DbxAuthInfo;
+import com.dropbox.core.DbxDownloader;
+import com.dropbox.core.DbxException;
+import com.dropbox.core.DbxRequestConfig;
+import com.dropbox.core.json.JsonReader.FileLoadException;
+import com.dropbox.core.util.IOUtil;
+import com.dropbox.core.v2.DbxClientV2;
+import com.dropbox.core.v2.files.CommitInfo;
+import com.dropbox.core.v2.files.FileMetadata;
+import com.dropbox.core.v2.files.Metadata;
+import com.dropbox.core.v2.files.UploadSessionCursor;
+import com.dropbox.core.v2.files.WriteMode;
+
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+
+public class Dropbox implements IBlobstore {
+
+	private DbxClientV2 dbxClient = null;
+
+	private static final String AUTH_FILE_PATH = "src/main/resources/dropbox/authFile.json";
+
+	private static final String DEFAULT_STORAGE_PATH = "/";
+
+	private Map<String, SessionInfo> chunkedFileMap = new HashMap<>();
+
+	public Dropbox() {
+		try {
+			// Reading auth-file
+			DbxAuthInfo authInfo = DbxAuthInfo.Reader.readFromFile(AUTH_FILE_PATH);
+
+			// Creating a DbxClientV2 to make API calls
+			DbxRequestConfig requestConfig = new DbxRequestConfig("DropboxAPI/2.1.1");
+			dbxClient = new DbxClientV2(requestConfig, authInfo.getAccessToken(), authInfo.getHost());
+
+		} catch (FileLoadException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean create(String blobname, byte[] data) {
+		InputStream input = new ByteArrayInputStream(data);
+		boolean isChunkedData = false;
+
+		// Checks if the data is a part of the file. For now, data is uploaded
+		// in a single request.
+		// TODO isChunkedData is always false.
+		if (!isChunkedData) {
+			try {
+				FileMetadata metadata = dbxClient.files().uploadBuilder(DEFAULT_STORAGE_PATH + blobname)
+						.withMode(WriteMode.ADD).withClientModified(new Date()).uploadAndFinish(input);
+				System.out.println("**********DROPBOX***********");
+				System.out.println("Blob is uploaded to Dropbox. \nName: " 
+						+ blobname + "\nSize: " + metadata.getSize());
+				System.out.println("****************************");
+			} catch (DbxException | IOException e) {
+				e.printStackTrace();
+			}
+
+		} else {
+			/**
+			 * This part is for RAID 5. Provides partial uploads. TODO Should be
+			 * tested.
+			 */
+			long offset = 0L;
+			String sessionId = null;
+
+			if (chunkedFileMap.containsKey(blobname)) {
+				SessionInfo sessionInfo = chunkedFileMap.get(blobname);
+				offset = sessionInfo.getOffset();
+				sessionId = sessionInfo.getSessionId();
+			}
+
+			boolean lastChunkedData = false;
+			try {
+
+				// Partial uploads have 3 phases; Start, Append, Finish
+				if (sessionId == null) {
+					// Starts uploading the first data
+					sessionId = dbxClient.files().uploadSessionStart().uploadAndFinish(input).getSessionId();
+
+					offset += data.length;
+					chunkedFileMap.put(blobname, new SessionInfo(sessionId, offset));
+				} else if (!lastChunkedData) {
+					// Appending data to related upload session
+					UploadSessionCursor cursor = new UploadSessionCursor(sessionId, offset);
+					dbxClient.files().uploadSessionAppendV2(cursor).uploadAndFinish(input);
+
+					offset += data.length;
+					chunkedFileMap.put(blobname, new SessionInfo(sessionId, offset));
+				} else {
+					// Finishing upload process by commiting the upload and
+					// close the session
+					CommitInfo commitInfo = CommitInfo.newBuilder(DEFAULT_STORAGE_PATH + blobname)
+							.withMode(WriteMode.ADD).withClientModified(new Date()).build();
+
+					UploadSessionCursor cursor = new UploadSessionCursor(sessionId, offset);
+					dbxClient.files().uploadSessionFinish(cursor, commitInfo).uploadAndFinish(input);
+
+					chunkedFileMap.remove(blobname);
+				}
+
+			} catch (DbxException | IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean delete(String blobname) throws ItemMissingException {
+		try {
+			dbxClient.files().delete(DEFAULT_STORAGE_PATH + blobname);
+			System.out.println("**********DROPBOX***********");
+			System.out.println("Blob is deleted. \nName: " + blobname);
+			System.out.println("****************************");
+		} catch (DbxException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Blob read(String blobname) throws ItemMissingException {
+		Blob blob = new Blob();
+		try {
+			DbxDownloader<FileMetadata> downloader = dbxClient.files().download(DEFAULT_STORAGE_PATH + blobname);
+			FileMetadata metadata = downloader.getResult();
+
+			InputStream inputStream = downloader.getInputStream();
+			byte[] data = IOUtil.slurp(inputStream, IOUtil.DEFAULT_COPY_BUFFER_SIZE);
+			if (data != null) {
+				blob.setData(data);
+				blob.setLocation(metadata.getPathLower());
+			}
+		} catch (DbxException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return blob;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public List<String> listBlobs() {
+		List<String> blobList = new ArrayList<String>();
+		try {
+			List<Metadata> list = dbxClient.files().listFolder("").getEntries();
+			if (list != null) {
+				for (Metadata data : list) {
+					blobList.add(data.getName());
+				}
+			}
+
+		} catch (DbxException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return blobList;
+	}
+
+	private class SessionInfo {
+		private String sessionId;
+		private long offset;
+
+		public SessionInfo(String sessionId, Long offset) {
+			this.sessionId = sessionId;
+			this.offset = offset;
+		}
+
+		public String getSessionId() {
+			return sessionId;
+		}
+
+		public long getOffset() {
+			return offset;
+		}
+	}
+}
