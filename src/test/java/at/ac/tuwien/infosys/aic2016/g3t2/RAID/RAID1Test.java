@@ -101,9 +101,9 @@ public class RAID1Test {
 
         RAID1 r = new RAID1(Arrays.asList(bs1, bs2, bs3));
 
-        Mockito.when(bs1.read("foo")).thenThrow(ItemMissingException.class);
+        Mockito.when(bs1.read("foo")).thenThrow(new ItemMissingException());
         Mockito.when(bs2.read("foo")).thenReturn(blob);
-        Mockito.when(bs3.read("foo")).thenThrow(ItemMissingException.class);
+        Mockito.when(bs3.read("foo")).thenThrow(new ItemMissingException());
 
         assertEquals(data, r.read("foo").getData());
 
@@ -116,7 +116,7 @@ public class RAID1Test {
     public void read_shouldErrorIfAllMissing() throws Exception {
         RAID1 r = new RAID1(Arrays.asList(bs1));
 
-        Mockito.when(bs1.read("foo2")).thenThrow(ItemMissingException.class);
+        Mockito.when(bs1.read("foo2")).thenThrow(new ItemMissingException());
 
         try {
             r.read("foo2");
