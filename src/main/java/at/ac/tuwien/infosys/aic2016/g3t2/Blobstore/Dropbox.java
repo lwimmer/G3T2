@@ -60,7 +60,6 @@ public class Dropbox implements IBlobstore {
 			e.printStackTrace();
 			return false;
 		}
-
 		return true;
 	}
 
