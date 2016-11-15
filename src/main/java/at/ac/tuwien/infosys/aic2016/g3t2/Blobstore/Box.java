@@ -9,6 +9,12 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxFile;
 import com.box.sdk.BoxFolder;
@@ -16,16 +22,18 @@ import com.box.sdk.BoxItem;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 
+@Service
+@Lazy
 public class Box implements IBlobstore {
 	
 	BoxAPIConnection api = null;
 	
-	public Box()
-	{
-		String client_id="6lef4wpryuf85m9rydw9scfdmnvj0157";
-		String client_secret="hekId6l8GgyOQnqN1rTJFJMLxrMwnWJ8";
+	@Value("${box.clientId}") private String clientId;
+	@Value("${box.clientSecret}") private String clientSecret;
 	
-		
+	@PostConstruct
+	private void init()
+	{
 		try
 		{
 			FileReader fr = new FileReader("token.txt");
@@ -37,7 +45,7 @@ public class Box implements IBlobstore {
 		    br.close();
 		    fr.close();
 			
-			api=new BoxAPIConnection(client_id,client_secret,access_token,refresh_token);
+			api=new BoxAPIConnection(clientId,clientSecret,access_token,refresh_token);
 			PrintWriter pw=new PrintWriter("token.txt", "UTF-8");
 			
 			String access_token_neu=api.getAccessToken();
