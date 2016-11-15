@@ -58,6 +58,7 @@ public class Dropbox implements IBlobstore {
 			System.out.println("****************************");
 		} catch (DbxException | IOException e) {
 			e.printStackTrace();
+			return false;
 		}
 		return true;
 	}
