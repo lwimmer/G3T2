@@ -7,11 +7,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
 import com.dropbox.core.DbxAuthInfo;
 import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
+import com.dropbox.core.DbxHost;
 import com.dropbox.core.DbxRequestConfig;
-import com.dropbox.core.json.JsonReader.FileLoadException;
 import com.dropbox.core.util.IOUtil;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
@@ -20,26 +26,24 @@ import com.dropbox.core.v2.files.WriteMode;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 
+@Service
+@Lazy
 public class Dropbox implements IBlobstore {
 
 	private DbxClientV2 dbxClient = null;
 
-	private static final String AUTH_FILE_PATH = "src/main/resources/dropbox/authFile.json";
-
 	private static final String DEFAULT_STORAGE_PATH = "/";
 
-	public Dropbox() {
-		try {
-			// Reading auth-file
-			DbxAuthInfo authInfo = DbxAuthInfo.Reader.readFromFile(AUTH_FILE_PATH);
-
-			// Creating a DbxClientV2 to make API calls
-			DbxRequestConfig requestConfig = new DbxRequestConfig("DropboxAPI/2.1.1");
-			dbxClient = new DbxClientV2(requestConfig, authInfo.getAccessToken(), authInfo.getHost());
-
-		} catch (FileLoadException e) {
-			e.printStackTrace();
-		}
+	@Value("${dropbox.accessToken}") private String accessToken;
+	
+	@PostConstruct
+	private void init() {
+		// Reading auth-file
+		DbxAuthInfo authInfo = new DbxAuthInfo(accessToken, DbxHost.DEFAULT);
+		
+		// Creating a DbxClientV2 to make API calls
+		DbxRequestConfig requestConfig = new DbxRequestConfig("DropboxAPI/2.1.1");
+		dbxClient = new DbxClientV2(requestConfig, authInfo.getAccessToken(), authInfo.getHost());
 	}
 
 	/**
