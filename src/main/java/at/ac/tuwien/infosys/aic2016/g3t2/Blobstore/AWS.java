@@ -1,15 +1,19 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.Blobstore;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import com.amazonaws.*;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -22,29 +26,28 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.util.IOUtils;
 
-public class AWS implements IBlobstore {
-	private AmazonS3 s3 = null;
-	private String bucketName = "aic2016g3t2";
-	private com.amazonaws.services.s3.model.Region region = null;
-	private Region usWest2 = null;
-	
-	//Constructor
-	public AWS() {
-		AWSCredentials credentials = null;
-        try {
-            credentials = new ProfileCredentialsProvider().getCredentials();
-        } catch (Exception e) {
-            throw new AmazonClientException(
-                    "Cannot load the credentials from the credential profiles file. " +
-                    "Please make sure that your credentials file is at the correct " +
-                    "location (~/.aws/credentials), and is in valid format.",
-                    e);
-        }
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 
-        s3 = new AmazonS3Client(credentials);
-        usWest2 = Region.getRegion(Regions.US_WEST_2);
-        s3.setRegion(usWest2);
+@Service
+@Lazy
+public class AWS implements IBlobstore {
+	
+	private AmazonS3 s3 = null;
+	
+	@Value("${aws.region}") private String regionStr;
+
+	@Value("${aws.bucketName}") private String bucketName;
+	
+	@Value("${aws.accessKeyId}") private String accessKeyId;
+	
+	@Value("${aws.secretKey}") private String secretKey;
+	
+	@PostConstruct
+	private void init() {
+        s3 = new AmazonS3Client(new BasicAWSCredentials(accessKeyId, secretKey));
+        s3.setRegion(Region.getRegion(Regions.fromName(regionStr)));
 	}
+	
 	/**
      * Create a new item in the S3 and store the passed data in it.
      *

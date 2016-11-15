@@ -22,3 +22,6 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+
+## AIC ##
+src/main/resources/credentials.properties
