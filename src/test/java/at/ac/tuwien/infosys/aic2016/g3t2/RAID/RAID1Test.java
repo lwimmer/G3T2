@@ -6,10 +6,8 @@ import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
