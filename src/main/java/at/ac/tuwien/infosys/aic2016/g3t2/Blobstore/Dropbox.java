@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.dropbox.core.DbxAuthInfo;
 import com.dropbox.core.DbxDownloader;
@@ -16,10 +14,8 @@ import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.json.JsonReader.FileLoadException;
 import com.dropbox.core.util.IOUtil;
 import com.dropbox.core.v2.DbxClientV2;
-import com.dropbox.core.v2.files.CommitInfo;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.files.Metadata;
-import com.dropbox.core.v2.files.UploadSessionCursor;
 import com.dropbox.core.v2.files.WriteMode;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
@@ -31,8 +27,6 @@ public class Dropbox implements IBlobstore {
 	private static final String AUTH_FILE_PATH = "src/main/resources/dropbox/authFile.json";
 
 	private static final String DEFAULT_STORAGE_PATH = "/";
-
-	private Map<String, SessionInfo> chunkedFileMap = new HashMap<>();
 
 	public Dropbox() {
 		try {
@@ -54,71 +48,18 @@ public class Dropbox implements IBlobstore {
 	@Override
 	public boolean create(String blobname, byte[] data) {
 		InputStream input = new ByteArrayInputStream(data);
-		boolean isChunkedData = false;
 
-		// Checks if the data is a part of the file. For now, data is uploaded
-		// in a single request.
-		// TODO isChunkedData is always false.
-		if (!isChunkedData) {
-			try {
-				FileMetadata metadata = dbxClient.files().uploadBuilder(DEFAULT_STORAGE_PATH + blobname)
-						.withMode(WriteMode.ADD).withClientModified(new Date()).uploadAndFinish(input);
-				System.out.println("**********DROPBOX***********");
-				System.out.println("Blob is uploaded to Dropbox. \nName: " 
-						+ blobname + "\nSize: " + metadata.getSize());
-				System.out.println("****************************");
-			} catch (DbxException | IOException e) {
-				e.printStackTrace();
-			}
-
-		} else {
-			/**
-			 * This part is for RAID 5. Provides partial uploads. TODO Should be
-			 * tested.
-			 */
-			long offset = 0L;
-			String sessionId = null;
-
-			if (chunkedFileMap.containsKey(blobname)) {
-				SessionInfo sessionInfo = chunkedFileMap.get(blobname);
-				offset = sessionInfo.getOffset();
-				sessionId = sessionInfo.getSessionId();
-			}
-
-			boolean lastChunkedData = false;
-			try {
-
-				// Partial uploads have 3 phases; Start, Append, Finish
-				if (sessionId == null) {
-					// Starts uploading the first data
-					sessionId = dbxClient.files().uploadSessionStart().uploadAndFinish(input).getSessionId();
-
-					offset += data.length;
-					chunkedFileMap.put(blobname, new SessionInfo(sessionId, offset));
-				} else if (!lastChunkedData) {
-					// Appending data to related upload session
-					UploadSessionCursor cursor = new UploadSessionCursor(sessionId, offset);
-					dbxClient.files().uploadSessionAppendV2(cursor).uploadAndFinish(input);
-
-					offset += data.length;
-					chunkedFileMap.put(blobname, new SessionInfo(sessionId, offset));
-				} else {
-					// Finishing upload process by commiting the upload and
-					// close the session
-					CommitInfo commitInfo = CommitInfo.newBuilder(DEFAULT_STORAGE_PATH + blobname)
-							.withMode(WriteMode.ADD).withClientModified(new Date()).build();
-
-					UploadSessionCursor cursor = new UploadSessionCursor(sessionId, offset);
-					dbxClient.files().uploadSessionFinish(cursor, commitInfo).uploadAndFinish(input);
-
-					chunkedFileMap.remove(blobname);
-				}
-
-			} catch (DbxException | IOException e) {
-				e.printStackTrace();
-				return false;
-			}
+		// Checks if the data is a part of the file. Data is uploaded in a single request.
+		try {
+			FileMetadata metadata = dbxClient.files().uploadBuilder(DEFAULT_STORAGE_PATH + blobname)
+					.withMode(WriteMode.ADD).withClientModified(new Date()).uploadAndFinish(input);
+			System.out.println("**********DROPBOX***********");
+			System.out.println("Blob is uploaded to Dropbox. \nName: " + blobname + "\nSize: " + metadata.getSize());
+			System.out.println("****************************");
+		} catch (DbxException | IOException e) {
+			e.printStackTrace();
 		}
+
 		return true;
 	}
 
@@ -184,23 +125,5 @@ public class Dropbox implements IBlobstore {
 		}
 
 		return blobList;
-	}
-
-	private class SessionInfo {
-		private String sessionId;
-		private long offset;
-
-		public SessionInfo(String sessionId, Long offset) {
-			this.sessionId = sessionId;
-			this.offset = offset;
-		}
-
-		public String getSessionId() {
-			return sessionId;
-		}
-
-		public long getOffset() {
-			return offset;
-		}
 	}
 }
