@@ -6,18 +6,27 @@ import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.List;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class BlobstoreTest {
     private List<IBlobstore> bs;
 
+    @Autowired
+	private AWS aws;
+    
     @Before
     public void setUp() {
-    	this.bs = Arrays.asList(new AWS());
+    	this.bs = Arrays.asList(aws);
     }
 
     @After
