@@ -1,6 +1,7 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.AWS;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Dropbox;
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 import org.junit.After;
@@ -23,10 +24,13 @@ public class BlobstoreTest {
 
     @Autowired
 	private AWS aws;
+
+    @Autowired
+    private Dropbox dropbox;
     
     @Before
     public void setUp() {
-    	this.bs = Arrays.asList(aws);
+        this.bs = Arrays.asList(aws, dropbox);
     }
 
     @After
