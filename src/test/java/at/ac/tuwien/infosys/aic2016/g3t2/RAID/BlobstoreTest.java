@@ -23,11 +23,11 @@ public class BlobstoreTest {
     private List<IBlobstore> bs;
 
     @Autowired
-	private AWS aws;
+    private AWS aws;
 
     @Autowired
     private Dropbox dropbox;
-    
+
     @Before
     public void setUp() {
         this.bs = Arrays.asList(aws, dropbox);
@@ -35,7 +35,7 @@ public class BlobstoreTest {
 
     @After
     public void tearDown() {
-    	this.bs = null;
+        this.bs = null;
     }
 
     @Test
@@ -43,10 +43,10 @@ public class BlobstoreTest {
         byte[] data = "blub".getBytes();
 
         for (IBlobstore bs : this.bs) {
-        	assertEquals(false, bs.listBlobs().contains("foo-test-create"));
-	        assertEquals(true, bs.create("foo-test-create", data));
-	        assertEquals(true, bs.listBlobs().contains("foo-test-create"));
-	        assertEquals(true, bs.delete("foo-test-create"));
+            assertEquals(false, bs.listBlobs().contains("foo-test-create"));
+            assertEquals(true, bs.create("foo-test-create", data));
+            assertEquals(true, bs.listBlobs().contains("foo-test-create"));
+            assertEquals(true, bs.delete("foo-test-create"));
         }
     }
 
@@ -55,58 +55,58 @@ public class BlobstoreTest {
         byte[] data = "blub".getBytes();
 
         for (IBlobstore bs : this.bs) {
-        	assertEquals(true, bs.create("foo-test-read-1", data));
-	        assertArrayEquals(data, bs.read("foo-test-read-1").getData());
-	        bs.delete("foo-test-read-1");
+            assertEquals(true, bs.create("foo-test-read-1", data));
+            assertArrayEquals(data, bs.read("foo-test-read-1").getData());
+            bs.delete("foo-test-read-1");
         }
     }
 
     @Test
     public void read_shouldErrorIfMissing() throws Exception {
-    	for (IBlobstore bs : this.bs) {
-        	assertEquals(false, bs.listBlobs().contains("foo-test-read-missing"));
-	        try {
-	            bs.read("foo-test-read-missing");
-	            fail("should throw exception");
-	        } catch (ItemMissingException e) {
-	        }
-    	}
+        for (IBlobstore bs : this.bs) {
+            assertEquals(false, bs.listBlobs().contains("foo-test-read-missing"));
+            try {
+                bs.read("foo-test-read-missing");
+                fail("should throw exception");
+            } catch (ItemMissingException e) {
+            }
+        }
     }
 
     @Test
     public void delete_shouldWorkSimpleCase() throws Exception {
-    	byte[] data = "blub".getBytes();
-    	
-    	for (IBlobstore bs : this.bs) {
-    		assertEquals(true, bs.create("foo-test-delete-1", data));
-	        assertEquals(true, bs.delete("foo-test-delete-1"));
-	        assertEquals(Arrays.asList(), bs.listBlobs());
-    	}
+        byte[] data = "blub".getBytes();
+
+        for (IBlobstore bs : this.bs) {
+            assertEquals(true, bs.create("foo-test-delete-1", data));
+            assertEquals(true, bs.delete("foo-test-delete-1"));
+            assertEquals(Arrays.asList(), bs.listBlobs());
+        }
     }
 
     @Test
     public void delete_shouldErrorIfMissing() throws Exception {
-    	for (IBlobstore bs : this.bs) {
-        	assertEquals(false, bs.listBlobs().contains("foo-test-delete-missing"));
-    		try {
-    			bs.delete("foo-test-delete-missing");
-    			fail("should throw exception");
-    		} catch (ItemMissingException e) {
-    		}
-    	}
+        for (IBlobstore bs : this.bs) {
+            assertEquals(false, bs.listBlobs().contains("foo-test-delete-missing"));
+            try {
+                bs.delete("foo-test-delete-missing");
+                fail("should throw exception");
+            } catch (ItemMissingException e) {
+            }
+        }
     }
 
     @Test
     public void listFiles_shouldWork() throws Exception {
         List<String> list = Arrays.asList("bar-4271", "foo-4271");
         byte[] data = "blub".getBytes();
-        
+
         for (IBlobstore bs : this.bs) {
-        	bs.create("bar-4271", data);
-        	bs.create("foo-4271", data);
-	        assertEquals(list, bs.listBlobs());
-	        bs.delete("foo-4271");
-	        bs.delete("bar-4271");
+            bs.create("bar-4271", data);
+            bs.create("foo-4271", data);
+            assertEquals(list, bs.listBlobs());
+            bs.delete("foo-4271");
+            bs.delete("bar-4271");
         }
     }
 }
