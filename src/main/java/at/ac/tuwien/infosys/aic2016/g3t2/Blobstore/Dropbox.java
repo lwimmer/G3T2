@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 
+import com.dropbox.core.v2.files.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -20,9 +21,6 @@ import com.dropbox.core.DbxHost;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.util.IOUtil;
 import com.dropbox.core.v2.DbxClientV2;
-import com.dropbox.core.v2.files.FileMetadata;
-import com.dropbox.core.v2.files.Metadata;
-import com.dropbox.core.v2.files.WriteMode;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 
@@ -77,6 +75,12 @@ public class Dropbox implements IBlobstore {
 			System.out.println("**********DROPBOX***********");
 			System.out.println("Blob is deleted. \nName: " + blobname);
 			System.out.println("****************************");
+		} catch (DeleteErrorException e) {
+			if (e.errorValue.getPathLookupValue().isNotFound()) {
+				throw new ItemMissingException();
+			}
+			e.printStackTrace();
+			return false;
 		} catch (DbxException e) {
 			e.printStackTrace();
 			return false;
@@ -100,10 +104,18 @@ public class Dropbox implements IBlobstore {
 				blob.setData(data);
 				blob.setLocation(metadata.getPathLower());
 			}
+		} catch (DownloadErrorException e) {
+			if (e.errorValue.isPath() && e.errorValue.getPathValue().isNotFound()) {
+				throw new ItemMissingException();
+			}
+			e.printStackTrace();
+			return null;
 		} catch (DbxException e) {
 			e.printStackTrace();
+			return null;
 		} catch (IOException e) {
 			e.printStackTrace();
+			return null;
 		}
 		return blob;
 	}
