@@ -2,17 +2,25 @@ package at.ac.tuwien.infosys.aic2016.g3t2.Blobstore;
 
 public class Location {
 
-    private String location;
+    private String blobstore;
+    private String filename;
+    private boolean original;
 
-    public Location (String location) {
-        this.location = location;
+    public Location (String blobstore, String filename, boolean original) {
+        this.blobstore = blobstore;
+        this.filename = filename;
+        this.original = original;
     }
 
-    public String getLocation() {
-        return location;
+    public String getFilename() {
+        return filename;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public boolean isOriginal() {
+        return original;
+    }
+
+    public String getBlobstore() {
+        return blobstore;
     }
 }
