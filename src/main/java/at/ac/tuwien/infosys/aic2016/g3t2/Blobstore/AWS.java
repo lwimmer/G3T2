@@ -119,12 +119,7 @@ public class AWS implements IBlobstore {
 			e.printStackTrace();
 		}
     	
-    	Blob blob = new Blob();
-    	if (data != null) {
-    		blob.setData(data);
-    		blob.setLocation("aws");
-    	}
-    	return blob;
+    	return new Blob(data);
     }
 
     /**

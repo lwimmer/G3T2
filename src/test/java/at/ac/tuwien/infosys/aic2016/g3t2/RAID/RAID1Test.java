@@ -83,8 +83,7 @@ public class RAID1Test {
     @Test
     public void read_shouldWorkSimpleCase() throws Exception {
         byte[] data = "blub".getBytes();
-        Blob blob = new Blob();
-        blob.setData(data);
+        Blob blob = new Blob(data);
 
         RAID1 r = new RAID1(Arrays.asList(bs1));
 
@@ -96,8 +95,7 @@ public class RAID1Test {
     @Test
     public void read_shouldWorkIfMissingOnSomeBlobstores() throws Exception {
         byte[] data = "blub".getBytes();
-        Blob blob = new Blob();
-        blob.setData(data);
+        Blob blob = new Blob(data);
 
         RAID1 r = new RAID1(Arrays.asList(bs1, bs2, bs3));
 

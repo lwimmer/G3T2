@@ -93,17 +93,13 @@ public class Dropbox implements IBlobstore {
 	 */
 	@Override
 	public Blob read(String blobname) throws ItemMissingException {
-		Blob blob = new Blob();
 		try {
 			DbxDownloader<FileMetadata> downloader = dbxClient.files().download(DEFAULT_STORAGE_PATH + blobname);
 			FileMetadata metadata = downloader.getResult();
 
 			InputStream inputStream = downloader.getInputStream();
 			byte[] data = IOUtil.slurp(inputStream, IOUtil.DEFAULT_COPY_BUFFER_SIZE);
-			if (data != null) {
-				blob.setData(data);
-				blob.setLocation(metadata.getPathLower());
-			}
+			return new Blob(data);
 		} catch (DownloadErrorException e) {
 			if (e.errorValue.isPath() && e.errorValue.getPathValue().isNotFound()) {
 				throw new ItemMissingException();
@@ -117,7 +113,6 @@ public class Dropbox implements IBlobstore {
 			e.printStackTrace();
 			return null;
 		}
-		return blob;
 	}
 
 	/**

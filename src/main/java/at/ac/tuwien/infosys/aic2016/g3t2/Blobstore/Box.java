@@ -126,10 +126,7 @@ public class Box implements IBlobstore {
 				
 				output.close();
 				
-				Blob blob=new Blob();
-				blob.setData(data);
-				blob.setLocation("box");
-				return blob;
+				return new Blob(data);
 			}
 			
 			catch(Exception e)

@@ -55,7 +55,6 @@ public class RAID1 implements IRAID {
         for (IBlobstore bs : this.blobstores) {
             try {
                 Blob blob = bs.read(storagefilename);
-                locations.add(blob.getLocation2());
                 data = blob.getData();
             } catch (ItemMissingException e) {
                 // TODO recover the broken copy?
