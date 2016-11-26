@@ -106,8 +106,12 @@ public class RAID1Test {
         assertEquals(data, r.read("foo").getData());
 
         Mockito.verify(bs1).read("foo");
+        // data missing, should restore
+        Mockito.verify(bs1).create("foo", data);
         Mockito.verify(bs2).read("foo");
         Mockito.verify(bs3).read("foo");
+        // data missing, should restore
+        Mockito.verify(bs3).create("foo", data);
     }
 
     @Test
