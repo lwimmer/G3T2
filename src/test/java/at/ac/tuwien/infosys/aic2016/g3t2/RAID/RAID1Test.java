@@ -88,7 +88,12 @@ public class RAID1Test {
         RAID1 r = new RAID1(Arrays.asList(bs1));
 
         Mockito.when(bs1.read("foo")).thenReturn(blob);
-        assertEquals(data, r.read("foo").getData());
+
+        File f = r.read("foo");
+        assertEquals(data, f.getData());
+        assertEquals("foo", f.getLocations().get(0).getFilename());
+        assertEquals(true, f.getLocations().get(0).isOriginal());
+
         Mockito.verify(bs1).read("foo");
     }
 
@@ -103,7 +108,10 @@ public class RAID1Test {
         Mockito.when(bs2.read("foo")).thenReturn(blob);
         Mockito.when(bs3.read("foo")).thenThrow(new ItemMissingException());
 
-        assertEquals(data, r.read("foo").getData());
+        File f = r.read("foo");
+        assertEquals(data, f.getData());
+        assertEquals("foo", f.getLocations().get(0).getFilename());
+        assertEquals(true, f.getLocations().get(0).isOriginal());
 
         Mockito.verify(bs1).read("foo");
         // data missing, should restore

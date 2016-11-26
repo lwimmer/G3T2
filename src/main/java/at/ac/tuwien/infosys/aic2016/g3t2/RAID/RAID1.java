@@ -73,6 +73,8 @@ public class RAID1 implements IRAID {
                 } else {
                     bad.add(bs);
                 }
+
+                locations.add(new Location(bs.getClass().getSimpleName(), storagefilename, true));
             } catch (ItemMissingException e) {
                 bad.add(bs);
             }
