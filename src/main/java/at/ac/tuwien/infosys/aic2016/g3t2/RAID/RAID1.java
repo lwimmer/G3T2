@@ -74,7 +74,7 @@ public class RAID1 implements IRAID {
                     bad.add(bs);
                 }
 
-                locations.add(new Location(bs.getClass().getSimpleName(), storagefilename, true));
+                locations.add(new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
             } catch (ItemMissingException e) {
                 bad.add(bs);
             }
@@ -85,8 +85,10 @@ public class RAID1 implements IRAID {
         }
 
 
+        // recover inconsistent replicas
         for (IBlobstore bs : bad) {
             bs.create(storagefilename, data);
+            locations.add(new Location(bs.getClass().getSimpleName(), storagefilename, true, true));
         }
 
         return new File(data, locations);

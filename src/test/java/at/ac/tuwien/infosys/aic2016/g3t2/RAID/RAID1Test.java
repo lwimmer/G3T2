@@ -112,6 +112,15 @@ public class RAID1Test {
         assertEquals(data, f.getData());
         assertEquals("foo", f.getLocations().get(0).getFilename());
         assertEquals(true, f.getLocations().get(0).isOriginal());
+        assertEquals(false, f.getLocations().get(0).isRecovered());
+
+        assertEquals("foo", f.getLocations().get(1).getFilename());
+        assertEquals(true, f.getLocations().get(1).isOriginal());
+        assertEquals(true, f.getLocations().get(1).isRecovered());
+
+        assertEquals("foo", f.getLocations().get(2).getFilename());
+        assertEquals(true, f.getLocations().get(2).isOriginal());
+        assertEquals(true, f.getLocations().get(2).isRecovered());
 
         Mockito.verify(bs1).read("foo");
         // data missing, should restore
