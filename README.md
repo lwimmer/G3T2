@@ -26,7 +26,17 @@ mvn spring-boot:run
 
 To access the REST interface you can use curl:
 ```sh
-http://localhost:8080/listFiles
+curl http://localhost:8080/listFiles
 ```
+
+Some examples:
+```sh
+curl http://localhost:8080/listFiles
+curl http://localhost:8080/file/filename
+curl http://localhost:8080/file/filename/locations
+curl -T filename http://localhost:8080/file/
+curl -X DELETE http://localhost:8080/file/filename
+```
+
 
 For further commands see `src/main/java/at/ac/tuwien/infosys/aic2016/g3t2/rest/RestController.java`
