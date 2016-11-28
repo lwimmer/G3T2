@@ -43,7 +43,7 @@ public class RestController {
 	 * 
 	 * @param filename the name of the file to get
 	 * @return the raw file contents
-	 * @throws ItemMissingException
+	 * @throws ItemMissingException if the file was not found
 	 */
 	@GetMapping("/file/{filename:.+}")
 	public @ResponseBody byte[] read(@PathVariable String filename) throws ItemMissingException {
@@ -61,8 +61,8 @@ public class RestController {
 	 * <pre>curl http://localhost:8080/file/filename/locations</pre>
 	 * 
 	 * @param filename the name of the file to get
-	 * @return a {@link File}
-	 * @throws ItemMissingException
+	 * @return a list of {@link Location}s
+	 * @throws ItemMissingException if the file was not found
 	 */
 	@GetMapping("/file/{filename:.+}/locations")
 	public @ResponseBody List<Location> readLocations(@PathVariable String filename) throws ItemMissingException {
@@ -91,11 +91,11 @@ public class RestController {
 	 * Deletes a file in the storage.
 	 * 
 	 * Usage examples (substitute "filename"):
-	 * <pre>curl -X http://localhost:8080/file/filename</pre>
+	 * <pre>curl -X DELETE http://localhost:8080/file/filename</pre>
 	 * 
-	 * @param filenamethe name of the file to delete
+	 * @param filename the name of the file to delete
 	 * @return true if successful
-	 * @throws ItemMissingException
+	 * @throws ItemMissingException if the file was not found
 	 */
 	@DeleteMapping("/file/{filename:.+}")
     public @ResponseBody boolean delete(@PathVariable String filename) throws ItemMissingException {
