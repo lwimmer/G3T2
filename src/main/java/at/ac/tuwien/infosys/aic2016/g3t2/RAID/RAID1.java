@@ -1,29 +1,41 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.AWS;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
-import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
-import org.apache.commons.codec.digest.DigestUtils;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
 
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.AWS;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Dropbox;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+
+@Service
+@Lazy
 public class RAID1 implements IRAID {
 
     private final List<IBlobstore> blobstores;
 
+    public RAID1(IBlobstore... blobstoresArray) {
+    	blobstores = Arrays.asList(blobstoresArray);
+    }
+    
     public RAID1(List<IBlobstore> blobstores) {
         this.blobstores = blobstores;
     }
 
-    public RAID1() {
-        this.blobstores = new ArrayList<>();
-        this.blobstores.add(new AWS());
+    // TODO: Box missing
+    @Autowired
+    public RAID1(AWS aws, Dropbox dropbox) {
+        this(Arrays.asList(aws, dropbox));
     }
 
     @Override
