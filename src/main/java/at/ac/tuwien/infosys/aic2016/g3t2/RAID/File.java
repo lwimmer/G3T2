@@ -11,10 +11,6 @@ public class File {
     private final byte[] data;
     private final List<Location> locations;
 
-    public static File removeMeta(File file) {
-    	return new File(null, file.locations);
-    }
-    
     public File(byte[] data, List<Location> locations) {
         this.data = data;
         this.locations = locations;
