@@ -7,7 +7,7 @@ Before you start you need to setup the configuration. Do so by copying `credenti
 ```sh
 cp src/main/resources/credentials.properties.template src/main/resources/credentials.properties
 ```
-and edit credentials.properties to your needs.
+and edit `credentials.properties` to your needs.
 
 ### Compile
 ```sh
