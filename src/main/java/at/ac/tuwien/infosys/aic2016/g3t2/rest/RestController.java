@@ -26,11 +26,11 @@ public class RestController {
 	 * Lists all files in the storage.
 	 * 
 	 * Usage example:
-	 * <pre>curl http://localhost:8080/listFiles</pre>
+	 * <pre>curl http://localhost:8080/file</pre>
 	 * 
 	 * @return list of filenames
 	 */
-	@GetMapping("/listFiles")
+	@GetMapping("/file")
     public @ResponseBody List<String> listFiles() {
         return storage.listFiles();
     }
