@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 public class RAID1 implements IRAID {
 
     private final List<IBlobstore> blobstores;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public RAID1(IBlobstore... blobstoresArray) {
     	blobstores = Arrays.asList(blobstoresArray);
@@ -99,8 +103,11 @@ public class RAID1 implements IRAID {
 
         // recover inconsistent replicas
         for (IBlobstore bs : bad) {
+            String replicaName = bs.getClass().getSimpleName();
+            logger.info("Detected inconsistent replica {}, file '{}'. Recovering...", replicaName, storagefilename);
             bs.create(storagefilename, data);
-            locations.add(new Location(bs.getClass().getSimpleName(), storagefilename, true, true));
+            locations.add(new Location(replicaName, storagefilename, true, true));
+            logger.info("Recovery of replica {}, file '{}' complete.", replicaName, storagefilename);
         }
 
         return new File(data, locations);
