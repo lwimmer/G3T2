@@ -48,10 +48,7 @@ public class RestController {
 	@GetMapping("/file/{filename:.+}")
 	public @ResponseBody byte[] read(@PathVariable String filename) throws ItemMissingException {
 		final File file = storage.read(filename);
-		if (file == null)
-			throw new ItemMissingException();
 		return file.getData();
-			
 	}
 	
 	/**
@@ -67,8 +64,6 @@ public class RestController {
 	@GetMapping("/file/{filename:.+}/locations")
 	public @ResponseBody List<Location> readLocations(@PathVariable String filename) throws ItemMissingException {
 		final File file = storage.read(filename);
-		if (file == null)
-			throw new ItemMissingException();
 		return file.getLocations();
 	}
 	
