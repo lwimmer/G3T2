@@ -3,10 +3,8 @@ package at.ac.tuwien.infosys.aic2016.g3t2.Blobstore;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -25,7 +23,12 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.json.JsonJsonParser;
+import org.springframework.boot.json.JsonParser;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -44,13 +47,15 @@ import io.jsonwebtoken.SignatureAlgorithm;
 public class Box implements IBlobstore {
 	
 	BoxAPIConnection api = null;
-	
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	@Value("${box.clientId}") private String clientId;
 	@Value("${box.clientSecret}") private String clientSecret;
 	
 	@PostConstruct
 	private void init()
 	{
+		logger.info("Trying Box login");
 		try
 		{
 			//Key und IDs
@@ -99,11 +104,10 @@ public class Box implements IBlobstore {
 			HttpResponse response = client.execute(post);
 			BufferedReader rd = new BufferedReader( new InputStreamReader(response.getEntity().getContent()));
 			String result=rd.readLine();
-			String accesstoken=result.substring(17, 49);
+			JSONObject json = new JSONObject(result);
+			String accesstoken=json.getString("access_token");
 			
-			
-//			System.out.println(result);
-//			System.out.println(accesstoken);
+			logger.info("Got access token: {} from reply {}", accesstoken, result);
 			
 			api=new BoxAPIConnection(accesstoken);
 		}
