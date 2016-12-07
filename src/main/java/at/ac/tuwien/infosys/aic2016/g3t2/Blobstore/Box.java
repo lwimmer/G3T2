@@ -140,7 +140,7 @@ public class Box implements IBlobstore {
 	@Override
 	public boolean delete(String blobname) throws ItemMissingException {
 		
-		if(getIdByName(blobname).equals(null))
+		if(getIdByName(blobname) == null)
 		{
 			throw new ItemMissingException();
 		}
@@ -158,7 +158,7 @@ public class Box implements IBlobstore {
 	@Override
 	public Blob read(String blobname) throws ItemMissingException {
 		
-		if(getIdByName(blobname).equals(null))
+		if(getIdByName(blobname) == null)
 		{
 			throw new ItemMissingException();
 		}
