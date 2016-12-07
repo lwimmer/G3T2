@@ -127,9 +127,13 @@ public class RAID1 implements IRAID {
         for (IBlobstore bs : bad) {
             String replicaName = bs.getClass().getSimpleName();
             logger.info("Detected inconsistent replica {}, file '{}'. Recovering...", replicaName, storagefilename);
-            bs.create(storagefilename, goodData);
-            locations.put(bs, new Location(replicaName, storagefilename, true, true));
-            logger.info("Recovery of replica {}, file '{}' complete.", replicaName, storagefilename);
+            boolean success = bs.create(storagefilename, goodData);
+            if (!success) {
+                logger.error("Failed to restore inconsistent replica");
+            } else {
+                locations.put(bs, new Location(replicaName, storagefilename, true, true));
+                logger.info("Recovery of replica {}, file '{}' complete.", replicaName, storagefilename);
+            }
         }
 
         List<Location> locationList = new ArrayList<>();

@@ -136,6 +136,7 @@ public class RAID1Test {
         Mockito.when(bs1.read("foo")).thenReturn(blob2);
         Mockito.when(bs2.read("foo")).thenReturn(blob);
         Mockito.when(bs3.read("foo")).thenReturn(blob);
+        Mockito.when(bs1.create("foo", data)).thenReturn(true);
 
         File f = r.read("foo");
         assertArrayEquals(data, f.getData());
@@ -167,6 +168,8 @@ public class RAID1Test {
         Mockito.when(bs1.read("foo")).thenThrow(new ItemMissingException());
         Mockito.when(bs2.read("foo")).thenReturn(blob);
         Mockito.when(bs3.read("foo")).thenThrow(new ItemMissingException());
+        Mockito.when(bs1.create("foo", data)).thenReturn(true);
+        Mockito.when(bs3.create("foo", data)).thenReturn(true);
 
         File f = r.read("foo");
         assertEquals(data, f.getData());
