@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.AWS;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Dropbox;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 
 @Service
@@ -36,10 +32,9 @@ public class RAID1 implements IRAID {
         this.blobstores = blobstores;
     }
 
-    // TODO: Box missing
     @Autowired
-    public RAID1(AWS aws, Dropbox dropbox) {
-        this(Arrays.asList(aws, dropbox));
+    public RAID1(AWS aws, Dropbox dropbox, Box box) {
+        this(Arrays.asList(aws, dropbox, box));
     }
 
     @Override
