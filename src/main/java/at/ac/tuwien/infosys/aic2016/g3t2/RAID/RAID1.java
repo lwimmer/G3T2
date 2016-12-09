@@ -51,12 +51,25 @@ public class RAID1 implements IRAID {
 
     @Override
     public boolean delete(String storagefilename) throws ItemMissingException {
+        boolean deleted = false;
+
         for (IBlobstore bs : this.blobstores) {
-            boolean result = bs.delete(storagefilename);
-            if (!result) {
-                return false;
+
+            try {
+                boolean result = bs.delete(storagefilename);
+                if (result) {
+                    deleted = true;
+                } else {
+                    return false;
+                }
+            } catch (ItemMissingException e) {
             }
         }
+
+        if (!deleted) {
+            throw new ItemMissingException();
+        }
+
         return true;
     }
 

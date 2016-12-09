@@ -162,6 +162,18 @@ public class RAID1Test {
     }
 
     @Test
+    public void delete_shouldIgnoreNotAllMissing() throws Exception {
+        RAID1 r = new RAID1(Arrays.asList(bs1, bs2));
+
+        Mockito.when(bs1.delete("foo2")).thenThrow(new ItemMissingException());
+        Mockito.when(bs2.delete("foo2")).thenReturn(true);
+
+        assertEquals(true, r.delete("foo2"));
+
+        Mockito.verify(bs1).delete("foo2");
+        Mockito.verify(bs2).delete("foo2");
+    }
+    @Test
     public void delete_shouldErrorFirstFailure() throws Exception {
         RAID1 r = new RAID1(Arrays.asList(bs1, bs2));
 
@@ -172,6 +184,23 @@ public class RAID1Test {
 
         Mockito.verify(bs1).delete("foo2");
         Mockito.verify(bs2, times(0)).delete("foo2");
+    }
+
+    @Test
+    public void delete_shouldErrorAllMissing() throws Exception {
+        RAID1 r = new RAID1(Arrays.asList(bs1, bs2));
+
+        Mockito.when(bs1.delete("foo2")).thenThrow(new ItemMissingException());
+        Mockito.when(bs2.delete("foo2")).thenThrow(new ItemMissingException());
+
+        try {
+            r.delete("foo2");
+            fail("Should throw exception");
+        } catch (ItemMissingException e) {
+        }
+
+        Mockito.verify(bs1).delete("foo2");
+        Mockito.verify(bs2).delete("foo2");
     }
 
     @Test
