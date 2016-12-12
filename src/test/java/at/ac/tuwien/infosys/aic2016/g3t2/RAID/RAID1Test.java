@@ -3,14 +3,17 @@ package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.web.servlet.handler.UserRoleAuthorizationInterceptor;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
@@ -98,6 +101,63 @@ public class RAID1Test {
     }
 
     @Test
+    public void read_shouldErrorNoMajority() throws Exception {
+        byte[] data = "blub".getBytes();
+        byte[] data2 = "blub2".getBytes();
+        Blob blob = new Blob(data);
+        Blob blob2 = new Blob(data2);
+
+        RAID1 r = new RAID1(Arrays.asList(bs1, bs2, bs3));
+
+        Mockito.when(bs1.read("foo")).thenReturn(blob);
+        Mockito.when(bs2.read("foo")).thenReturn(blob2);
+        Mockito.when(bs3.read("foo")).thenThrow(new ItemMissingException());
+
+        try {
+            r.read("foo");
+            fail("Should throw exception");
+        } catch (UserinteractionRequiredException e) {
+        }
+
+        Mockito.verify(bs1).read("foo");
+        Mockito.verify(bs2).read("foo");
+        Mockito.verify(bs3).read("foo");
+    }
+
+    @Test
+    public void read_shouldWorkIfIncorrectDataOnOneBlobstore() throws Exception {
+        byte[] data = "blub".getBytes();
+        byte[] data2 = "blub2".getBytes();
+        Blob blob = new Blob(data);
+        Blob blob2 = new Blob(data2);
+
+        RAID1 r = new RAID1(Arrays.asList(bs1, bs2, bs3));
+
+        Mockito.when(bs1.read("foo")).thenReturn(blob2);
+        Mockito.when(bs2.read("foo")).thenReturn(blob);
+        Mockito.when(bs3.read("foo")).thenReturn(blob);
+
+        File f = r.read("foo");
+        assertArrayEquals(data, f.getData());
+        assertEquals("foo", f.getLocations().get(0).getFilename());
+        assertEquals(true, f.getLocations().get(0).isOriginal());
+        assertEquals(true, f.getLocations().get(0).isRecovered());
+
+        assertEquals("foo", f.getLocations().get(1).getFilename());
+        assertEquals(true, f.getLocations().get(1).isOriginal());
+        assertEquals(false, f.getLocations().get(1).isRecovered());
+
+        assertEquals("foo", f.getLocations().get(2).getFilename());
+        assertEquals(true, f.getLocations().get(2).isOriginal());
+        assertEquals(false, f.getLocations().get(2).isRecovered());
+
+        Mockito.verify(bs1).read("foo");
+        // data incorrect, should restore
+        Mockito.verify(bs1).create("foo", data);
+        Mockito.verify(bs2).read("foo");
+        Mockito.verify(bs3).read("foo");
+    }
+    @Test
     public void read_shouldWorkIfMissingOnSomeBlobstores() throws Exception {
         byte[] data = "blub".getBytes();
         Blob blob = new Blob(data);
@@ -112,11 +172,11 @@ public class RAID1Test {
         assertEquals(data, f.getData());
         assertEquals("foo", f.getLocations().get(0).getFilename());
         assertEquals(true, f.getLocations().get(0).isOriginal());
-        assertEquals(false, f.getLocations().get(0).isRecovered());
+        assertEquals(true, f.getLocations().get(0).isRecovered());
 
         assertEquals("foo", f.getLocations().get(1).getFilename());
         assertEquals(true, f.getLocations().get(1).isOriginal());
-        assertEquals(true, f.getLocations().get(1).isRecovered());
+        assertEquals(false, f.getLocations().get(1).isRecovered());
 
         assertEquals("foo", f.getLocations().get(2).getFilename());
         assertEquals(true, f.getLocations().get(2).isOriginal());

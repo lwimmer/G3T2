@@ -1,13 +1,8 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,51 +78,92 @@ public class RAID1 implements IRAID {
     }
 
     @Override
-    public File read(String storagefilename) throws ItemMissingException {
-        ArrayList<Location> locations = new ArrayList<>();
-        ArrayList<IBlobstore> bad = new ArrayList<>();
-        ArrayList<String> hashes = new ArrayList<>();
-        String goodHash = null;
-        byte[] data = null;
+    public File read(String storagefilename) throws ItemMissingException, UserinteractionRequiredException {
+        HashMap<IBlobstore, Location> locations = new HashMap<>();
+        Set<IBlobstore> bad = new HashSet<>();
+        Set<IBlobstore> good = new HashSet<>();
+        HashMap<String, ArrayList<IBlobstore>> hashes = new HashMap<>();
+        HashMap<IBlobstore, byte[]> dataItems = new HashMap<>();
 
         for (IBlobstore bs : this.blobstores) {
             try {
                 Blob blob = bs.read(storagefilename);
                 String hash = DigestUtils.sha1Hex(blob.getData());
-                // TODO store the hash somewhere instead of assuming that the
-                // first file is good
-                if (goodHash == null) {
-                    goodHash = hash;
-                }
-                hashes.add(hash);
-                if (hash.equals(goodHash)) {
-                    if (data == null) {
-                        data = blob.getData();
-                    }
+                ArrayList<IBlobstore> list = hashes.get(hash);
+                if (list == null) {
+                    list = new ArrayList<>();
+                    list.add(bs);
+                    hashes.put(hash, list);
                 } else {
-                    bad.add(bs);
+                    list.add(bs);
                 }
 
-                locations.add(new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
+                dataItems.put(bs, blob.getData());
+                locations.put(bs, new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
             } catch (ItemMissingException e) {
                 bad.add(bs);
             }
         }
 
-        if (data == null) {
+        if (dataItems.size() == 0) {
             throw new ItemMissingException();
         }
+
+        if (dataItems.size() == 1) {
+            // file only exists only once -> probably failed deletion -> delete
+            // TODO implement deletion, add test
+        }
+
+        categorizeReplicaByHash(hashes, bad, good);
+
+        if (good.size() < blobstores.size()/2) {
+            throw new UserinteractionRequiredException("Less than half the number of blobstores agree on the content of '"+storagefilename+"'. Please manually fix the incorrect ones.");
+        }
+
+        IBlobstore goodStore = good.iterator().next();
+        byte[] goodData = dataItems.get(goodStore);
 
         // recover inconsistent replicas
         for (IBlobstore bs : bad) {
             String replicaName = bs.getClass().getSimpleName();
             logger.info("Detected inconsistent replica {}, file '{}'. Recovering...", replicaName, storagefilename);
-            bs.create(storagefilename, data);
-            locations.add(new Location(replicaName, storagefilename, true, true));
+            bs.create(storagefilename, goodData);
+            locations.put(bs, new Location(replicaName, storagefilename, true, true));
             logger.info("Recovery of replica {}, file '{}' complete.", replicaName, storagefilename);
         }
 
-        return new File(data, locations);
+        List<Location> locationList = new ArrayList<>();
+        for (IBlobstore bs: this.blobstores) {
+            locationList.add(locations.get(bs));
+        }
+
+        return new File(goodData, locationList);
+    }
+
+    private void categorizeReplicaByHash(HashMap<String, ArrayList<IBlobstore>> hashes, Set<IBlobstore> bad, Set<IBlobstore> good) throws UserinteractionRequiredException {
+        String bestHash = null;
+        int bestCount = 0;
+
+        for (Map.Entry<String, ArrayList<IBlobstore>> entry : hashes.entrySet()) {
+            int count = entry.getValue().size();
+            if (bestHash == null || count > bestCount) {
+                bestHash = entry.getKey();
+                bestCount = count;
+            }
+        }
+
+        if (bestCount == 1 && hashes.size() > 1) {
+            throw new UserinteractionRequiredException("All replicas differ. Please manually delete the incorrect files.");
+        }
+
+
+        for (Map.Entry<String, ArrayList<IBlobstore>> entry : hashes.entrySet()) {
+            if (entry.getKey().equals(bestHash)) {
+                good.addAll(entry.getValue());
+            } else {
+                bad.addAll(entry.getValue());
+            }
+        }
     }
 
     @Override

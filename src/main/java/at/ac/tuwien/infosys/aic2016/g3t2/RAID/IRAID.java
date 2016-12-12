@@ -1,6 +1,7 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public interface IRAID {
      * @param storagefilename Name of the file
      * @return the file as File
      */
-    File read(String storagefilename) throws ItemMissingException;
+    File read(String storagefilename) throws ItemMissingException, UserinteractionRequiredException;
 
     /**
      * Return a list of file names saved in the RAID.

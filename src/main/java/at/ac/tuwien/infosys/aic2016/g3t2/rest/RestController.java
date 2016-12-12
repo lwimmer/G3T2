@@ -2,6 +2,7 @@ package at.ac.tuwien.infosys.aic2016.g3t2.rest;
 
 import java.util.List;
 
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,7 +47,7 @@ public class RestController {
 	 * @throws ItemMissingException if the file was not found
 	 */
 	@GetMapping("/file/{filename:.+}")
-	public @ResponseBody byte[] read(@PathVariable String filename) throws ItemMissingException {
+	public @ResponseBody byte[] read(@PathVariable String filename) throws ItemMissingException, UserinteractionRequiredException {
 		final File file = storage.read(filename);
 		return file.getData();
 	}
@@ -62,7 +63,7 @@ public class RestController {
 	 * @throws ItemMissingException if the file was not found
 	 */
 	@GetMapping("/file/{filename:.+}/locations")
-	public @ResponseBody List<Location> readLocations(@PathVariable String filename) throws ItemMissingException {
+	public @ResponseBody List<Location> readLocations(@PathVariable String filename) throws ItemMissingException, UserinteractionRequiredException {
 		final File file = storage.read(filename);
 		return file.getLocations();
 	}

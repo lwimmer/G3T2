@@ -1,22 +1,19 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+import junitx.framework.ListAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
-import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
-import junitx.framework.ListAssert;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
