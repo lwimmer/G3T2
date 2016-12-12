@@ -76,4 +76,4 @@ curl -X DELETE http://localhost:8080/file/filename
 ```
 
 
-For further commands see `src/main/java/at/ac/tuwien/infosys/aic2016/g3t2/rest/RestController.java`
+For further commands see [RestController](src/main/java/at/ac/tuwien/infosys/aic2016/g3t2/rest/RestController.java).
