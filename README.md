@@ -59,6 +59,8 @@ mvn test
 mvn spring-boot:run
 ```
 
+To enable DEBUG logging add `--debug`. (See [Spring doc](http://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-logging.html#boot-features-logging-console-output).)
+
 To access the REST interface you can use curl:
 ```sh
 curl http://localhost:8080/file
