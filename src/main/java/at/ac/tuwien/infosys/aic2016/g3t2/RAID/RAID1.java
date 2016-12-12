@@ -2,39 +2,48 @@ package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.*;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 
 @Service
 @Lazy
 public class RAID1 implements IRAID {
 
-    private final List<IBlobstore> blobstores;
+    private final Collection<IBlobstore> blobstores;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public RAID1(IBlobstore... blobstoresArray) {
-    	blobstores = Arrays.asList(blobstoresArray);
-    }
-    
-    public RAID1(List<IBlobstore> blobstores) {
-        this.blobstores = blobstores;
+        blobstores = Arrays.asList(blobstoresArray);
     }
 
     @Autowired
-    public RAID1(AWS aws, Dropbox dropbox, Box box) {
-        this(Arrays.asList(aws, dropbox, box));
+    public RAID1(Map<String, IBlobstore> blobstoresMap,
+            @Value("#{'${disabled_blobstores:}'.split(',')}") List<String> disabledBlobstores) {
+        if (disabledBlobstores != null)
+            for (String disabled : disabledBlobstores)
+                blobstoresMap.remove(disabled);
+        blobstores = blobstoresMap.values();
+    }
+
+    public RAID1(Collection<IBlobstore> blobstores) {
+        this.blobstores = blobstores;
     }
 
     @Override
@@ -85,7 +94,8 @@ public class RAID1 implements IRAID {
             try {
                 Blob blob = bs.read(storagefilename);
                 String hash = DigestUtils.sha1Hex(blob.getData());
-                // TODO store the hash somewhere instead of assuming that the first file is good
+                // TODO store the hash somewhere instead of assuming that the
+                // first file is good
                 if (goodHash == null) {
                     goodHash = hash;
                 }
@@ -107,7 +117,6 @@ public class RAID1 implements IRAID {
         if (data == null) {
             throw new ItemMissingException();
         }
-
 
         // recover inconsistent replicas
         for (IBlobstore bs : bad) {
