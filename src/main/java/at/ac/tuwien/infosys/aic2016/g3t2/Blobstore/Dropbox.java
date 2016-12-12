@@ -54,7 +54,7 @@ public class Dropbox implements IBlobstore {
 		// Checks if the data is a part of the file. Data is uploaded in a single request.
 		try {
 			FileMetadata metadata = dbxClient.files().uploadBuilder(DEFAULT_STORAGE_PATH + blobname)
-					.withMode(WriteMode.ADD).withClientModified(new Date()).uploadAndFinish(input);
+					.withMode(WriteMode.OVERWRITE).withClientModified(new Date()).uploadAndFinish(input);
 			System.out.println("**********DROPBOX***********");
 			System.out.println("Blob is uploaded to Dropbox. \nName: " + blobname + "\nSize: " + metadata.getSize());
 			System.out.println("****************************");
