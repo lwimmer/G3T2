@@ -124,6 +124,10 @@ public class Box implements IBlobstore {
 			InputStream input = new ByteArrayInputStream(data);
 	    	BoxFolder rootFolder = BoxFolder.getRootFolder(api);
 	    	
+	    	if (getIdByName(blobname) != null) 
+			{
+				delete(blobname);
+			}
 	    	rootFolder.uploadFile(input, blobname);
 	    	input.close();
 	    	

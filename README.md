@@ -9,6 +9,13 @@ cp src/main/resources/credentials.properties.template src/main/resources/credent
 ```
 and edit `credentials.properties` to your needs.
 
+
+#### Dropbox
+For Dropbox authentication you need to do the following:
+
+Go to https://www.dropbox.com/developers/apps/create and create a new app.
+You are forwarded to the app settings. There you can generate the required access token for the credentials file.
+
 #### Box
 
 For Box authentication you need to do the following:
