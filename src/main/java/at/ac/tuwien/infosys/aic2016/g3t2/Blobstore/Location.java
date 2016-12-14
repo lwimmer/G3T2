@@ -7,6 +7,9 @@ public class Location {
     private boolean original;
     private boolean recovered;
 
+    public Location() {
+    }
+    
     public Location(String blobstore, String filename, boolean original, boolean recovered) {
         this.blobstore = blobstore;
         this.filename = filename;
