@@ -104,23 +104,46 @@ public class RAID1 implements IRAID {
         HashMap<String, ArrayList<IBlobstore>> hashes = new HashMap<>();
         HashMap<IBlobstore, byte[]> dataItems = new HashMap<>();
 
-        for (IBlobstore bs : this.blobstores) {
-            try {
-                Blob blob = bs.read(storagefilename);
-                String hash = DigestUtils.sha1Hex(blob.getData());
-                ArrayList<IBlobstore> list = hashes.get(hash);
-                if (list == null) {
-                    list = new ArrayList<>();
-                    list.add(bs);
-                    hashes.put(hash, list);
-                } else {
-                    list.add(bs);
-                }
+        HashMap<IBlobstore, Future<Blob>> futures = new HashMap<>();
 
-                dataItems.put(bs, blob.getData());
-                locations.put(bs, new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
-            } catch (ItemMissingException e) {
-                bad.add(bs);
+        for (IBlobstore bs : this.blobstores) {
+            Callable<Blob> worker = () -> {
+                Blob blob = null;
+                try {
+                    blob = bs.read(storagefilename);
+                } catch (ItemMissingException e) {
+                }
+                return blob;
+            };
+            futures.put(bs, pool.submit(worker));
+        }
+
+        for (Map.Entry<IBlobstore, Future<Blob>> entry : futures.entrySet()) {
+            IBlobstore bs = entry.getKey();
+            Future<Blob> f = entry.getValue();
+
+            try {
+                Blob blob = f.get();
+                if (blob != null) {
+                    String hash = DigestUtils.sha1Hex(blob.getData());
+                    ArrayList<IBlobstore> list = hashes.get(hash);
+                    if (list == null) {
+                        list = new ArrayList<>();
+                        list.add(bs);
+                        hashes.put(hash, list);
+                    } else {
+                        list.add(bs);
+                    }
+
+                    dataItems.put(bs, blob.getData());
+                    locations.put(bs, new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
+                } else {
+                    bad.add(bs);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
         }
 
