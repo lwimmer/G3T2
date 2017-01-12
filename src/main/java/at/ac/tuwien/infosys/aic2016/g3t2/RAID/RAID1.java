@@ -214,9 +214,21 @@ public class RAID1 implements IRAID {
 
     @Override
     public List<String> listFiles() {
-        Set<String> result = new LinkedHashSet<>();
+        List<Future<List<String>>> futures = new ArrayList<>();
         for (IBlobstore bs : this.blobstores) {
-            result.addAll(bs.listBlobs());
+            Callable<List<String>> worker = () -> bs.listBlobs();
+            futures.add(pool.submit(worker));
+        }
+
+        Set<String> result = new LinkedHashSet<>();
+        for (Future<List<String>> f : futures) {
+            try {
+                result.addAll(f.get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }
         return new ArrayList<>(result);
     }
