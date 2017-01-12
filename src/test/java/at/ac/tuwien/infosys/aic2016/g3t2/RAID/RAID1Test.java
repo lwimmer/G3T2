@@ -237,7 +237,7 @@ public class RAID1Test {
         Mockito.verify(bs2).delete("foo2");
     }
     @Test
-    public void delete_shouldErrorFirstFailure() throws Exception {
+    public void delete_shouldErrorOnFailure() throws Exception {
         RAID1 r = new RAID1(Arrays.asList(bs1, bs2));
 
         Mockito.when(bs1.delete("foo2")).thenReturn(false);
@@ -246,7 +246,7 @@ public class RAID1Test {
         assertEquals(false, r.delete("foo2"));
 
         Mockito.verify(bs1).delete("foo2");
-        Mockito.verify(bs2, times(0)).delete("foo2");
+        Mockito.verify(bs2, Mockito.atMost(1)).delete("foo2");
     }
 
     @Test

@@ -74,18 +74,31 @@ public class RAID1 implements IRAID {
 
     @Override
     public boolean delete(String storagefilename) throws ItemMissingException {
+        List<Future<Boolean>> futures = new ArrayList<>();
         boolean deleted = false;
 
         for (IBlobstore bs : this.blobstores) {
+            Callable<Boolean> worker = () -> bs.delete(storagefilename);
+            futures.add(pool.submit(worker));
+        }
 
+        for (Future<Boolean> f : futures) {
             try {
-                boolean result = bs.delete(storagefilename);
-                if (result) {
+                if (f.get()) {
                     deleted = true;
                 } else {
                     return false;
                 }
-            } catch (ItemMissingException e) {
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return false;
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof ItemMissingException) {
+                    // ignore
+                } else {
+                    logger.error("Unhandleded exception. throwing up");
+                    throw new RuntimeException(e);
+                }
             }
         }
 
