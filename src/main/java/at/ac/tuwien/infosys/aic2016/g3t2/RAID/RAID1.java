@@ -121,11 +121,13 @@ public class RAID1 implements IRAID {
 
         for (IBlobstore bs : this.blobstores) {
             Callable<Blob> worker = () -> {
+                logger.info("Fetching file {} from {}", storagefilename, bs.getClass().getSimpleName());
                 Blob blob = null;
                 try {
                     blob = bs.read(storagefilename);
                 } catch (ItemMissingException e) {
                 }
+                logger.info("Finished fetching from {}", bs.getClass().getSimpleName());
                 return blob;
             };
             futures.put(bs, pool.submit(worker));
