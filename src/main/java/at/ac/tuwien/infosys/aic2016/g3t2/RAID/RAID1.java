@@ -1,6 +1,7 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -23,9 +24,11 @@ public class RAID1 implements IRAID {
     private final Collection<IBlobstore> blobstores;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ExecutorService pool;
 
     public RAID1(IBlobstore... blobstoresArray) {
         blobstores = Arrays.asList(blobstoresArray);
+        pool = Executors.newCachedThreadPool();
     }
 
     @Autowired
@@ -35,17 +38,33 @@ public class RAID1 implements IRAID {
             for (String disabled : disabledBlobstores)
                 blobstoresMap.remove(disabled);
         blobstores = blobstoresMap.values();
+        pool = Executors.newCachedThreadPool();
     }
 
     public RAID1(Collection<IBlobstore> blobstores) {
         this.blobstores = blobstores;
+        pool = Executors.newCachedThreadPool();
     }
 
     @Override
     public boolean create(String storagefilename, byte[] data) {
         boolean success = false;
+
+        List<Future<Boolean>> futures = new ArrayList<>();
         for (IBlobstore bs : this.blobstores) {
-            boolean result = bs.create(storagefilename, data);
+            Callable<Boolean> worker = () -> bs.create(storagefilename, data);
+            futures.add(pool.submit(worker));
+        }
+
+        for (Future<Boolean> f : futures) {
+            boolean result = false;
+            try {
+                result = f.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
             if (result) {
                 success = true;
             }
