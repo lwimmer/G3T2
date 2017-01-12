@@ -52,7 +52,12 @@ public class RAID1 implements IRAID {
 
         List<Future<Boolean>> futures = new ArrayList<>();
         for (IBlobstore bs : this.blobstores) {
-            Callable<Boolean> worker = () -> bs.create(storagefilename, data);
+            Callable<Boolean> worker = () -> {
+                logger.info("Uploading file {} to {}", storagefilename, bs.getClass().getSimpleName());
+                Boolean ret = bs.create(storagefilename, data);
+                logger.info("Finished uploading to {}", bs.getClass().getSimpleName());
+                return ret;
+            };
             futures.add(pool.submit(worker));
         }
 
