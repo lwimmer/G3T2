@@ -1,6 +1,7 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -23,9 +24,11 @@ public class RAID1 implements IRAID {
     private final Collection<IBlobstore> blobstores;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final ExecutorService pool;
 
     public RAID1(IBlobstore... blobstoresArray) {
         blobstores = Arrays.asList(blobstoresArray);
+        pool = Executors.newCachedThreadPool();
     }
 
     @Autowired
@@ -35,17 +38,38 @@ public class RAID1 implements IRAID {
             for (String disabled : disabledBlobstores)
                 blobstoresMap.remove(disabled);
         blobstores = blobstoresMap.values();
+        pool = Executors.newCachedThreadPool();
     }
 
     public RAID1(Collection<IBlobstore> blobstores) {
         this.blobstores = blobstores;
+        pool = Executors.newCachedThreadPool();
     }
 
     @Override
     public boolean create(String storagefilename, byte[] data) {
         boolean success = false;
+
+        List<Future<Boolean>> futures = new ArrayList<>();
         for (IBlobstore bs : this.blobstores) {
-            boolean result = bs.create(storagefilename, data);
+            Callable<Boolean> worker = () -> {
+                logger.info("Uploading file {} to {}", storagefilename, bs.getClass().getSimpleName());
+                Boolean ret = bs.create(storagefilename, data);
+                logger.info("Finished uploading to {}", bs.getClass().getSimpleName());
+                return ret;
+            };
+            futures.add(pool.submit(worker));
+        }
+
+        for (Future<Boolean> f : futures) {
+            boolean result = false;
+            try {
+                result = f.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
             if (result) {
                 success = true;
             }
@@ -55,18 +79,31 @@ public class RAID1 implements IRAID {
 
     @Override
     public boolean delete(String storagefilename) throws ItemMissingException {
+        List<Future<Boolean>> futures = new ArrayList<>();
         boolean deleted = false;
 
         for (IBlobstore bs : this.blobstores) {
+            Callable<Boolean> worker = () -> bs.delete(storagefilename);
+            futures.add(pool.submit(worker));
+        }
 
+        for (Future<Boolean> f : futures) {
             try {
-                boolean result = bs.delete(storagefilename);
-                if (result) {
+                if (f.get()) {
                     deleted = true;
                 } else {
                     return false;
                 }
-            } catch (ItemMissingException e) {
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return false;
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof ItemMissingException) {
+                    // ignore
+                } else {
+                    logger.error("Unhandleded exception. throwing up");
+                    throw new RuntimeException(e);
+                }
             }
         }
 
@@ -85,23 +122,48 @@ public class RAID1 implements IRAID {
         HashMap<String, ArrayList<IBlobstore>> hashes = new HashMap<>();
         HashMap<IBlobstore, byte[]> dataItems = new HashMap<>();
 
-        for (IBlobstore bs : this.blobstores) {
-            try {
-                Blob blob = bs.read(storagefilename);
-                String hash = DigestUtils.sha1Hex(blob.getData());
-                ArrayList<IBlobstore> list = hashes.get(hash);
-                if (list == null) {
-                    list = new ArrayList<>();
-                    list.add(bs);
-                    hashes.put(hash, list);
-                } else {
-                    list.add(bs);
-                }
+        HashMap<IBlobstore, Future<Blob>> futures = new HashMap<>();
 
-                dataItems.put(bs, blob.getData());
-                locations.put(bs, new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
-            } catch (ItemMissingException e) {
-                bad.add(bs);
+        for (IBlobstore bs : this.blobstores) {
+            Callable<Blob> worker = () -> {
+                logger.info("Fetching file {} from {}", storagefilename, bs.getClass().getSimpleName());
+                Blob blob = null;
+                try {
+                    blob = bs.read(storagefilename);
+                } catch (ItemMissingException e) {
+                }
+                logger.info("Finished fetching from {}", bs.getClass().getSimpleName());
+                return blob;
+            };
+            futures.put(bs, pool.submit(worker));
+        }
+
+        for (Map.Entry<IBlobstore, Future<Blob>> entry : futures.entrySet()) {
+            IBlobstore bs = entry.getKey();
+            Future<Blob> f = entry.getValue();
+
+            try {
+                Blob blob = f.get();
+                if (blob != null) {
+                    String hash = DigestUtils.sha1Hex(blob.getData());
+                    ArrayList<IBlobstore> list = hashes.get(hash);
+                    if (list == null) {
+                        list = new ArrayList<>();
+                        list.add(bs);
+                        hashes.put(hash, list);
+                    } else {
+                        list.add(bs);
+                    }
+
+                    dataItems.put(bs, blob.getData());
+                    locations.put(bs, new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
+                } else {
+                    bad.add(bs);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
         }
 
@@ -172,9 +234,21 @@ public class RAID1 implements IRAID {
 
     @Override
     public List<String> listFiles() {
-        Set<String> result = new LinkedHashSet<>();
+        List<Future<List<String>>> futures = new ArrayList<>();
         for (IBlobstore bs : this.blobstores) {
-            result.addAll(bs.listBlobs());
+            Callable<List<String>> worker = () -> bs.listBlobs();
+            futures.add(pool.submit(worker));
+        }
+
+        Set<String> result = new LinkedHashSet<>();
+        for (Future<List<String>> f : futures) {
+            try {
+                result.addAll(f.get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }
         return new ArrayList<>(result);
     }
