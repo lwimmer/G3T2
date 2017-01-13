@@ -1,22 +1,22 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
-import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
-import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.springframework.web.servlet.handler.UserRoleAuthorizationInterceptor;
-
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
+import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 
 public class RAID1Test {
     private IBlobstore bs1;
