@@ -10,11 +10,20 @@ public class Location {
     public Location() {
     }
     
+    public Location(String blobstore, String filename) {
+        this.blobstore = blobstore;
+        this.filename = filename;
+    }
+    
     public Location(String blobstore, String filename, boolean original, boolean recovered) {
         this.blobstore = blobstore;
         this.filename = filename;
         this.original = original;
         this.recovered = recovered;
+    }
+    
+    public Location(Location location, boolean original, boolean recovered) {
+        this(location.blobstore, location.filename, original, recovered);
     }
 
     public String getFilename() {
