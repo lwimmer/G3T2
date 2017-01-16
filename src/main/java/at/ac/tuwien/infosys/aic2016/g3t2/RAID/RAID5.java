@@ -94,10 +94,20 @@ public class RAID5 extends AbstractRAID {
             .allMatch(result -> result);
     }
 
+    protected boolean safeDelete(IBlobstore blobstore, String storagefilename) {
+        try {
+            return blobstore.delete(storagefilename);
+        } catch (ItemMissingException e) {
+            return false;
+        }
+    }
+    
     @Override
     public boolean delete(String storagefilename) throws ItemMissingException {
-        // TODO Auto-generated method stub
-        return false;
+        final int numDeleted = blobstores.parallelStream().map(bs -> safeDelete(bs, storagefilename)).mapToInt(r -> r ? 1 : 0).sum();
+        if (numDeleted == 0)
+            throw new ItemMissingException();
+        return numDeleted == blobstores.size();
     }
 
     @Override
@@ -135,7 +145,7 @@ public class RAID5 extends AbstractRAID {
             }
         }
         if (missingPart >= 0 && parity == null)
-            throw new UserinteractionRequiredException("one part AND parity is missing or damaged");
+            throw new UserinteractionRequiredException("one part AND parity are missing or damaged");
         
         if (missingPart >= 0 || parity == null) { // recovery needed
             
