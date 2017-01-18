@@ -166,7 +166,7 @@ public class RAID5 extends AbstractRAID {
                 targetBlobstore.get().create(storagefilename, parity.encode());
             } else if (missingPart >= 0) { // need to recover a part
                 dataParts[missingPart] = new RAID5File(fileSize, numParts, missingPart, false, missingBlock);
-                dataParts[missingPart].setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, true, true)); // TODO location
+                dataParts[missingPart].setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, true, true));
                 targetBlobstore.get().create(storagefilename, dataParts[missingPart].encode());
             }
         }
