@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -152,14 +154,20 @@ public class RAID5 extends AbstractRAID {
             final byte[] missingBlock = xor(Stream.concat(Arrays.stream(dataParts), Stream.of(parity))
                     .filter(p -> p != null).map(RAID5File::getData).toArray(byte[][]::new));
 
+            // find which blobstore is missing a part
+            final Set<String> usedBlobstores = allParts.stream().map(p -> p.getLocation().getBlobstore()).collect(Collectors.toSet());
+            final Optional<IBlobstore> targetBlobstore = blobstores.stream().filter(bs -> ! usedBlobstores.contains(bs.getClass().getSimpleName())).findAny();
+            if (! targetBlobstore.isPresent())
+                throw new UserinteractionRequiredException("could not find a free blobstore to put missing part");
+            
             if (parity == null) { // need to recover parity
                 parity = new RAID5File(fileSize, numParts, -1, true, missingBlock);
-                // TODO save
-                parity.setLocation(new Location(null, storagefilename, false, true)); // TODO location
+                parity.setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, false, true));
+                targetBlobstore.get().create(storagefilename, parity.encode());
             } else if (missingPart >= 0) { // need to recover a part
                 dataParts[missingPart] = new RAID5File(fileSize, numParts, missingPart, false, missingBlock);
-                // TODO save
-                dataParts[missingPart].setLocation(new Location(null, storagefilename, true, true)); // TODO location
+                dataParts[missingPart].setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, true, true)); // TODO location
+                targetBlobstore.get().create(storagefilename, dataParts[missingPart].encode());
             }
         }
         
