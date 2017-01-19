@@ -2,7 +2,6 @@ package at.ac.tuwien.infosys.aic2016.g3t2.rest;
 
 import java.util.List;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,86 +15,112 @@ import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
 import at.ac.tuwien.infosys.aic2016.g3t2.RAID.File;
 import at.ac.tuwien.infosys.aic2016.g3t2.RAID.RAID1;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 
 @Controller
 public class RestController {
-	
-	@Autowired
-	private RAID1 storage;
-	
-	/**
-	 * Lists all files in the storage.
-	 * 
-	 * Usage example:
-	 * <pre>curl http://localhost:8080/file</pre>
-	 * 
-	 * @return list of filenames
-	 */
-	@GetMapping("/file")
+
+    @Autowired
+    private RAID1 storage;
+
+    /**
+     * Lists all files in the storage.
+     * 
+     * Usage example:
+     * 
+     * <pre>
+     * curl http://localhost:8080/file
+     * </pre>
+     * 
+     * @return list of filenames
+     */
+    @GetMapping("/file")
     public @ResponseBody List<String> listFiles() {
         return storage.listFiles();
     }
-	
-	/**
-	 * Gets the content of a file.
-	 * 
-	 * Usage example (substitute "filename"):
-	 * <pre>curl http://localhost:8080/file/filename</pre>
-	 * 
-	 * @param filename the name of the file to get
-	 * @return the raw file contents
-	 * @throws ItemMissingException if the file was not found
-	 */
-	@GetMapping("/file/{filename:.+}")
-	public @ResponseBody byte[] read(@PathVariable String filename) throws ItemMissingException, UserinteractionRequiredException {
-		final File file = storage.read(filename);
-		return file.getData();
-	}
-	
-	/**
-	 * Gets the locations of a file.
-	 * 
-	 * Usage examples (substitute "filename"):
-	 * <pre>curl http://localhost:8080/file/filename/locations</pre>
-	 * 
-	 * @param filename the name of the file to get
-	 * @return a list of {@link Location}s
-	 * @throws ItemMissingException if the file was not found
-	 */
-	@GetMapping("/file/{filename:.+}/locations")
-	public @ResponseBody List<Location> readLocations(@PathVariable String filename) throws ItemMissingException, UserinteractionRequiredException {
-		final File file = storage.read(filename);
-		return file.getLocations();
-	}
-	
-	/**
-	 * Stores a file in the storage.
-	 * 
-	 * Usage examples (substitute "filename"):
-	 * <pre>curl -T filename http://localhost:8080/file/</pre>
-	 * 
-	 * @param filename the name of the file to store 
-	 * @param data the contents of the file
-	 * @return true if successful
-	 */
-	@PutMapping("/file/{filename:.+}")
+
+    /**
+     * Gets the content of a file.
+     * 
+     * Usage example (substitute "filename"):
+     * 
+     * <pre>
+     * curl http://localhost:8080/file/filename
+     * </pre>
+     * 
+     * @param filename
+     *            the name of the file to get
+     * @return the raw file contents
+     * @throws ItemMissingException
+     *             if the file was not found
+     */
+    @GetMapping("/file/{filename:.+}")
+    public @ResponseBody byte[] read(@PathVariable String filename)
+            throws ItemMissingException, UserinteractionRequiredException {
+        final File file = storage.read(filename);
+        return file.getData();
+    }
+
+    /**
+     * Gets the locations of a file.
+     * 
+     * Usage examples (substitute "filename"):
+     * 
+     * <pre>
+     * curl http://localhost:8080/file/filename/locations
+     * </pre>
+     * 
+     * @param filename
+     *            the name of the file to get
+     * @return a list of {@link Location}s
+     * @throws ItemMissingException
+     *             if the file was not found
+     */
+    @GetMapping("/file/{filename:.+}/locations")
+    public @ResponseBody List<Location> readLocations(@PathVariable String filename)
+            throws ItemMissingException, UserinteractionRequiredException {
+        final File file = storage.read(filename);
+        return file.getLocations();
+    }
+
+    /**
+     * Stores a file in the storage.
+     * 
+     * Usage examples (substitute "filename"):
+     * 
+     * <pre>
+     * curl -T filename http://localhost:8080/file/
+     * </pre>
+     * 
+     * @param filename
+     *            the name of the file to store
+     * @param data
+     *            the contents of the file
+     * @return true if successful
+     */
+    @PutMapping("/file/{filename:.+}")
     public @ResponseBody boolean create(@PathVariable String filename, @RequestBody byte[] data) {
-		return storage.create(filename, data);
-	}
-	
-	/**
-	 * Deletes a file in the storage.
-	 * 
-	 * Usage examples (substitute "filename"):
-	 * <pre>curl -X DELETE http://localhost:8080/file/filename</pre>
-	 * 
-	 * @param filename the name of the file to delete
-	 * @return true if successful
-	 * @throws ItemMissingException if the file was not found
-	 */
-	@DeleteMapping("/file/{filename:.+}")
+        return storage.create(filename, data);
+    }
+
+    /**
+     * Deletes a file in the storage.
+     * 
+     * Usage examples (substitute "filename"):
+     * 
+     * <pre>
+     * curl -X DELETE http://localhost:8080/file/filename
+     * </pre>
+     * 
+     * @param filename
+     *            the name of the file to delete
+     * @return true if successful
+     * @throws ItemMissingException
+     *             if the file was not found
+     */
+    @DeleteMapping("/file/{filename:.+}")
     public @ResponseBody boolean delete(@PathVariable String filename) throws ItemMissingException {
-		return storage.delete(filename);
-	}
+        return storage.delete(filename);
+    }
 
 }
