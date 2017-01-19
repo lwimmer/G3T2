@@ -3,7 +3,6 @@ package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import java.util.Arrays;
 import java.util.List;

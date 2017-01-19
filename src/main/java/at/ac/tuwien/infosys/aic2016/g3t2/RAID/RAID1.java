@@ -22,7 +22,7 @@ import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 public class RAID1 extends AbstractRAID {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final static int MINIMUM_BLOBSTORES = 2;
+    private final static int MINIMUM_BLOBSTORES = 1;
     private final ExecutorService pool = Executors.newCachedThreadPool();
     
     public RAID1(Collection<IBlobstore> blobstores) {
