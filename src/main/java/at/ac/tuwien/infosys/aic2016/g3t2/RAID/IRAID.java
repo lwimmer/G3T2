@@ -18,7 +18,7 @@ public interface IRAID {
      *
      * @param storagefilename Name of the file
      * @param data content of the file
-     * @return true if sucessfully created
+     * @return true if successfully created
      */
     boolean create(String storagefilename, byte[] data);
 
@@ -26,7 +26,7 @@ public interface IRAID {
      * Delete a file.
      *
      * @param storagefilename Name of the file
-     * @return true if sucessfully deleted
+     * @return true if successfully deleted
      */
     boolean delete(String storagefilename) throws ItemMissingException;
 
