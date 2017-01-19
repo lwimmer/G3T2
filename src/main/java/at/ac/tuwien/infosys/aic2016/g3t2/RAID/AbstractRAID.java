@@ -43,6 +43,7 @@ public abstract class AbstractRAID implements IRAID {
         return blobstores
             .parallelStream()
             .flatMap(bs -> bs.listBlobs().stream())
+            .distinct()
             .collect(Collectors.toList());
     }
 
