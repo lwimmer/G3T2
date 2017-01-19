@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,14 @@ public abstract class AbstractRAID implements IRAID {
     
     public AbstractRAID(int minimumBlobstores, IBlobstore... blobstoresArray) {
         this(minimumBlobstores, Arrays.asList(blobstoresArray));
+    }
+
+    @Override
+    public List<String> listFiles() {
+        return blobstores
+            .parallelStream()
+            .flatMap(bs -> bs.listBlobs().stream())
+            .collect(Collectors.toList());
     }
 
 }

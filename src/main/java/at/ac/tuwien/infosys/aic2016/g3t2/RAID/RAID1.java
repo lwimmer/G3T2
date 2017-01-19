@@ -19,33 +19,26 @@ import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 
 @Service
 @Lazy
-public class RAID1 implements IRAID {
-
-    private final Collection<IBlobstore> blobstores;
+public class RAID1 extends AbstractRAID {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final ExecutorService pool;
+    private final static int MINIMUM_BLOBSTORES = 2;
+    private final ExecutorService pool = Executors.newCachedThreadPool();
+    
+    public RAID1(Collection<IBlobstore> blobstores) {
+        super(MINIMUM_BLOBSTORES, blobstores);
+    }
 
     public RAID1(IBlobstore... blobstoresArray) {
-        blobstores = Arrays.asList(blobstoresArray);
-        pool = Executors.newCachedThreadPool();
+        super(MINIMUM_BLOBSTORES, blobstoresArray);
     }
 
     @Autowired
-    public RAID1(Map<String, IBlobstore> blobstoresMap,
+    public RAID1(Map<String, IBlobstore> blobstoresMap, 
             @Value("#{'${disabled_blobstores:}'.split(',')}") List<String> disabledBlobstores) {
-        if (disabledBlobstores != null)
-            for (String disabled : disabledBlobstores)
-                blobstoresMap.remove(disabled);
-        blobstores = blobstoresMap.values();
-        pool = Executors.newCachedThreadPool();
+        super(MINIMUM_BLOBSTORES, blobstoresMap, disabledBlobstores);
     }
-
-    public RAID1(Collection<IBlobstore> blobstores) {
-        this.blobstores = blobstores;
-        pool = Executors.newCachedThreadPool();
-    }
-
+    
     @Override
     public boolean create(String storagefilename, byte[] data) {
         boolean success = false;
@@ -230,26 +223,5 @@ public class RAID1 implements IRAID {
                 bad.addAll(entry.getValue());
             }
         }
-    }
-
-    @Override
-    public List<String> listFiles() {
-        List<Future<List<String>>> futures = new ArrayList<>();
-        for (IBlobstore bs : this.blobstores) {
-            Callable<List<String>> worker = () -> bs.listBlobs();
-            futures.add(pool.submit(worker));
-        }
-
-        Set<String> result = new LinkedHashSet<>();
-        for (Future<List<String>> f : futures) {
-            try {
-                result.addAll(f.get());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-        return new ArrayList<>(result);
     }
 }

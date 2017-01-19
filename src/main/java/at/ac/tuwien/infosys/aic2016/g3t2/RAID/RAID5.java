@@ -182,12 +182,4 @@ public class RAID5 extends AbstractRAID {
         return new File(Arrays.copyOf(baos.toByteArray(), (int)fileSize), locations);
     }
 
-    @Override
-    public List<String> listFiles() {
-        return blobstores
-            .parallelStream()
-            .flatMap(bs -> bs.listBlobs().stream())
-            .collect(Collectors.toList());
-    }
-
 }
