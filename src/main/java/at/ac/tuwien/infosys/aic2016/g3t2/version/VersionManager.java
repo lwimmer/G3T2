@@ -6,8 +6,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,22 +25,18 @@ public class VersionManager implements IVersionManager {
 	private final String VERSION_REGEX = "_[v][0-9]{0,2}$";
 
 	private final String VERSION_SUFFIX = "_v";
-	
+
 	@Autowired
 	private RAIDSwitch raid;
 
-	@PostConstruct
-	private void init() {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean create(String storagefilename, byte[] data) {
+		return create(storagefilename, data, null);
 	}
 
-	/**
-         * {@inheritDoc}
-         */
-        @Override
-        public boolean create(String storagefilename, byte[] data) {
-            return create(storagefilename, data, null);
-        }
-	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -62,16 +56,11 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public boolean update(String filename, byte[] data) throws ItemMissingException, UserinteractionRequiredException {
-		// TODO needs to be optimized! (getLastVersion - getFileStorage)
 		int lastVersion = getLastVersion(filename);
 		if (lastVersion == 0) {
 			throw new ItemMissingException();
 		}
 
-		String fileNameWithVersionSuffix = filename;
-		if (!filename.matches(VERSION_REGEX)) {
-			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + lastVersion;
-		}
 		return raid.create(filename + VERSION_SUFFIX + (lastVersion + 1), data);
 	}
 
@@ -93,7 +82,7 @@ public class VersionManager implements IVersionManager {
 		if (!filename.matches(VERSION_REGEX)) {
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + version;
 		}
-                return raid.read(fileNameWithVersionSuffix);
+		return raid.read(fileNameWithVersionSuffix);
 	}
 
 	/**
@@ -122,7 +111,6 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public boolean delete(String filename) throws ItemMissingException {
-		// TODO needs to be optimized! (getLastVersion - getFileStorage)
 		int lastVersion = getLastVersion(filename);
 		if (lastVersion == 0) {
 			throw new ItemMissingException();
@@ -166,9 +154,8 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public List<String> listFiles() {
-	    return raid.listFiles().stream()
-	        .map(n -> n.replaceFirst(VERSION_REGEX, ""))
-	        .distinct().collect(Collectors.toList());
+		return raid.listFiles().stream().map(n -> n.replaceFirst(VERSION_REGEX, "")).distinct()
+				.collect(Collectors.toList());
 	}
 
 	private int extractFileVersion(String filename) {
