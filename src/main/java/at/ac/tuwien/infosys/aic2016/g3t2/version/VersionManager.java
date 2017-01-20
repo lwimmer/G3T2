@@ -1,10 +1,9 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.version;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -185,10 +184,11 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public List<String> listFiles() {
-		List<String> fileList = listFiles(Storage.RAID1);
-		fileList.addAll(listFiles(Storage.RAID5));
-
-		return fileList;
+		return Arrays.asList(Storage.values())
+				.parallelStream()
+				.flatMap(s -> this.listFiles(s).stream())
+				.distinct()
+				.collect(Collectors.toList());
 	}
 
 	/**
