@@ -40,4 +40,9 @@ public interface IBlobstore {
      * @return list of item names
      */
     List<String> listBlobs();
+    
+    /**
+     * @return internal Name to identify Blobstore
+     */
+    String getName();
 }

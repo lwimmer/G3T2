@@ -78,7 +78,7 @@ public class RestTest {
 
         for (RAIDType raidType : RAIDType.values()) {
             for (IBlobstore bs : blobstores) {
-                String bsName = bs.getClass().getSimpleName();
+                String bsName = bs.getName();
                 File file = putRandomFile(raidType);
                 
                 bs.delete(raidType.getPrefix() + file.fn + "_v1");
@@ -100,7 +100,7 @@ public class RestTest {
 
         for (RAIDType raidType : RAIDType.values()) {
             for (IBlobstore bs : blobstores) {
-                String bsName = bs.getClass().getSimpleName();
+                String bsName = bs.getName();
                 File file = putRandomFile(raidType);
                 
                 byte[] secondData = getRandomData(file.data.length);

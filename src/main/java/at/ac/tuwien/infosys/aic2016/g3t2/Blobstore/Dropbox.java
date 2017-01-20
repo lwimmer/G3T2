@@ -54,6 +54,11 @@ public class Dropbox implements IBlobstore {
 		dbxClient = new DbxClientV2(requestConfig, authInfo.getAccessToken(), authInfo.getHost());
 		logger.info("Dropbox Client is created with the given auth info");
 	}
+	
+	@Override
+        public String getName() {
+            return getClass().getSimpleName();
+        }
 
 	/**
 	 * {@inheritDoc}

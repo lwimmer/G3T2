@@ -67,13 +67,26 @@ public class RAID5 extends AbstractRAID {
         return result;
     }
     
-    protected RAID5File readRAID5File(IBlobstore blobstore, String storagefilename) {
+    protected RAID5File readRAID5File(IBlobstore bs, String name) {
         try {
-            final Location location = new Location(blobstore.getClass().getSimpleName(), storagefilename);
-            return new RAID5File(location, blobstore.read(addPrefix(storagefilename)).getData());
+            logger.info("Fetching {} from {}", name, bs.getName());
+            final Location location = new Location(bs.getName(), name);
+            return new RAID5File(location, bs.read(addPrefix(name)).getData());
         } catch (ItemMissingException | IOException e) {
             return null;
+        } finally {
+            logger.info("Finished fetching {} from {}", name, bs.getName());
         }
+    }
+    
+    protected boolean bsCreate(IBlobstore bs, String name, byte[] data) {
+        try {
+            logger.info("Uploading {} to {}", name, bs.getName());
+            return bs.create(name, data);
+        } finally {
+            logger.info("Finished uploading {} to {}", name, bs.getName());
+        }
+        
     }
     
     @Override
@@ -93,15 +106,18 @@ public class RAID5 extends AbstractRAID {
         final AtomicInteger counter = new AtomicInteger();
         return blobstores
             .parallelStream()
-            .map(bs -> bs.create(addPrefix(storagefilename), parts.get(counter.getAndIncrement()).encode()))
+            .map(bs -> bsCreate(bs, addPrefix(storagefilename), parts.get(counter.getAndIncrement()).encode()))
             .allMatch(result -> result);
     }
 
-    protected boolean safeDelete(IBlobstore blobstore, String storagefilename) {
+    protected boolean safeDelete(IBlobstore bs, String name) {
         try {
-            return blobstore.delete(storagefilename);
+            logger.info("Deleting {} from {}", name, bs.getName());
+            return bs.delete(name);
         } catch (ItemMissingException e) {
             return false;
+        } finally {
+            logger.info("Finished deleting {} from {}", name, bs.getName());
         }
     }
     
@@ -115,72 +131,81 @@ public class RAID5 extends AbstractRAID {
 
     @Override
     public File read(final String storagefilename) throws ItemMissingException, UserinteractionRequiredException {
-        final List<RAID5File> allParts = blobstores
-            .parallelStream()
-            .map(bs -> readRAID5File(bs, storagefilename))
-            .filter(bs -> bs != null)
-            .collect(Collectors.toList());
-        
-        if (allParts.size() == 0)
-            throw new ItemMissingException();
-        int numParts = allParts.get(0).getNumParts();
-        long fileSize = allParts.get(0).getFileSize();
-        if (allParts.size() < numParts)
-            throw new UserinteractionRequiredException("more than one part is missing or damaged");
-        
-        RAID5File parity = null;
-        final RAID5File[] dataParts = new RAID5File[numParts];
-        for (RAID5File part : allParts) {
-            if (part.isParity) {
-                parity = part;
-            } else {
-                dataParts[part.getPartNum()] = part;
-                part.setLocation(new Location(part.getLocation(), true, false));
-            }
-        }
-        
-        int missingPart = -1;
-        for (int i = 0; i < numParts; i++) {
-            if (dataParts[i] == null) {
-                if (missingPart >= 0)
-                    throw new UserinteractionRequiredException("more than one part is missing or damaged");
-                missingPart = i;
-            }
-        }
-        if (missingPart >= 0 && parity == null)
-            throw new UserinteractionRequiredException("one part AND parity are missing or damaged");
-        
-        if (missingPart >= 0 || parity == null) { // recovery needed
+        try {
+            final List<RAID5File> allParts = blobstores
+                .parallelStream()
+                .map(bs -> readRAID5File(bs, storagefilename))
+                .filter(bs -> bs != null)
+                .collect(Collectors.toList());
             
-            final byte[] missingBlock = xor(Stream.concat(Arrays.stream(dataParts), Stream.of(parity))
-                    .filter(p -> p != null).map(RAID5File::getData).toArray(byte[][]::new));
-
-            // find which blobstore is missing a part
-            final Set<String> usedBlobstores = allParts.stream().map(p -> p.getLocation().getBlobstore()).collect(Collectors.toSet());
-            final Optional<IBlobstore> targetBlobstore = blobstores.stream().filter(bs -> ! usedBlobstores.contains(bs.getClass().getSimpleName())).findAny();
-            if (! targetBlobstore.isPresent())
-                throw new UserinteractionRequiredException("could not find a free blobstore to put missing part");
+            if (allParts.size() == 0)
+                throw new ItemMissingException();
+            int numParts = allParts.get(0).getNumParts();
+            long fileSize = allParts.get(0).getFileSize();
+            if (allParts.size() < numParts)
+                throw new UserinteractionRequiredException("more than one part is missing or damaged");
             
-            if (parity == null) { // need to recover parity
-                parity = new RAID5File(fileSize, numParts, -1, true, missingBlock);
-                parity.setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, false, true));
-                targetBlobstore.get().create(addPrefix(storagefilename), parity.encode());
-            } else if (missingPart >= 0) { // need to recover a part
-                dataParts[missingPart] = new RAID5File(fileSize, numParts, missingPart, false, missingBlock);
-                dataParts[missingPart].setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, true, true));
-                targetBlobstore.get().create(addPrefix(storagefilename), dataParts[missingPart].encode());
+            RAID5File parity = null;
+            final RAID5File[] dataParts = new RAID5File[numParts];
+            for (RAID5File part : allParts) {
+                if (part.isParity) {
+                    parity = part;
+                } else {
+                    dataParts[part.getPartNum()] = part;
+                    part.setLocation(new Location(part.getLocation(), true, false));
+                }
             }
-        }
-        
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream(dataParts[0].data.length * dataParts.length);
-        for (RAID5File part : dataParts) {
-            try {
-                baos.write(part.getData());
-            } catch (IOException e) { // should never happen with ByteArrayOutputStream
+            
+            int missingPart = -1;
+            for (int i = 0; i < numParts; i++) {
+                if (dataParts[i] == null) {
+                    if (missingPart >= 0)
+                        throw new UserinteractionRequiredException("more than one part is missing or damaged");
+                    missingPart = i;
+                }
             }
+            if (missingPart >= 0 && parity == null)
+                throw new UserinteractionRequiredException("one part AND parity are missing or damaged");
+            
+            if (missingPart >= 0 || parity == null) { // recovery needed
+                
+                logger.warn("Recovery for {} required", storagefilename);
+                
+                final byte[] missingBlock = xor(Stream.concat(Arrays.stream(dataParts), Stream.of(parity))
+                        .filter(p -> p != null).map(RAID5File::getData).toArray(byte[][]::new));
+    
+                // find which blobstore is missing a part
+                final Set<String> usedBlobstores = allParts.stream().map(p -> p.getLocation().getBlobstore()).collect(Collectors.toSet());
+                final Optional<IBlobstore> targetBlobstore = blobstores.stream().filter(bs -> ! usedBlobstores.contains(bs.getName())).findAny();
+                if (! targetBlobstore.isPresent())
+                    throw new UserinteractionRequiredException("could not find a free blobstore to put missing part");
+                
+                if (parity == null) { // need to recover parity
+                    parity = new RAID5File(fileSize, numParts, -1, true, missingBlock);
+                    parity.setLocation(new Location(targetBlobstore.get().getName(), storagefilename, false, true));
+                    targetBlobstore.get().create(addPrefix(storagefilename), parity.encode());
+                    logger.warn("Recovery for {}: parity recovered in {}", storagefilename, targetBlobstore.get().getName());
+                } else if (missingPart >= 0) { // need to recover a part
+                    dataParts[missingPart] = new RAID5File(fileSize, numParts, missingPart, false, missingBlock);
+                    dataParts[missingPart].setLocation(new Location(targetBlobstore.get().getName(), storagefilename, true, true));
+                    targetBlobstore.get().create(addPrefix(storagefilename), dataParts[missingPart].encode());
+                    logger.warn("Recovery for {}: part {}/{} recovered in {}", storagefilename, missingPart, numParts, targetBlobstore.get().getName());
+                }
+            }
+            
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream(dataParts[0].data.length * dataParts.length);
+            for (RAID5File part : dataParts) {
+                try {
+                    baos.write(part.getData());
+                } catch (IOException e) { // should never happen with ByteArrayOutputStream
+                }
+            }
+            final List<Location> locations = Stream.concat(Arrays.stream(dataParts), Stream.of(parity)).map(RAID5File::getLocation).collect(Collectors.toList());
+            return new File(Arrays.copyOf(baos.toByteArray(), (int)fileSize), new FileMetadata(RAIDType.RAID5, locations));
+        } catch (Exception e) {
+            logger.error("Error while reading {}: {}", storagefilename, e.getMessage());
+            throw e;
         }
-        final List<Location> locations = Stream.concat(Arrays.stream(dataParts), Stream.of(parity)).map(RAID5File::getLocation).collect(Collectors.toList());
-        return new File(Arrays.copyOf(baos.toByteArray(), (int)fileSize), new FileMetadata(RAIDType.RAID5, locations));
     }
 
 }

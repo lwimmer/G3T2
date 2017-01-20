@@ -55,9 +55,9 @@ public class RAID1 extends AbstractRAID {
         List<Future<Boolean>> futures = new ArrayList<>();
         for (IBlobstore bs : this.blobstores) {
             Callable<Boolean> worker = () -> {
-                logger.info("Uploading file {} to {}", storagefilename, bs.getClass().getSimpleName());
+                logger.info("Uploading file {} to {}", storagefilename, bs.getName());
                 Boolean ret = bs.create(addPrefix(storagefilename), data);
-                logger.info("Finished uploading to {}", bs.getClass().getSimpleName());
+                logger.info("Finished uploading to {}", bs.getName());
                 return ret;
             };
             futures.add(pool.submit(worker));
@@ -128,13 +128,13 @@ public class RAID1 extends AbstractRAID {
 
         for (IBlobstore bs : this.blobstores) {
             Callable<Blob> worker = () -> {
-                logger.info("Fetching file {} from {}", storagefilename, bs.getClass().getSimpleName());
+                logger.info("Fetching file {} from {}", storagefilename, bs.getName());
                 Blob blob = null;
                 try {
                     blob = bs.read(addPrefix(storagefilename));
                 } catch (ItemMissingException e) {
                 }
-                logger.info("Finished fetching from {}", bs.getClass().getSimpleName());
+                logger.info("Finished fetching from {}", bs.getName());
                 return blob;
             };
             futures.put(bs, pool.submit(worker));
@@ -158,7 +158,7 @@ public class RAID1 extends AbstractRAID {
                     }
 
                     dataItems.put(bs, blob.getData());
-                    locations.put(bs, new Location(bs.getClass().getSimpleName(), addPrefix(storagefilename), true, false));
+                    locations.put(bs, new Location(bs.getName(), addPrefix(storagefilename), true, false));
                 } else {
                     bad.add(bs);
                 }
@@ -189,7 +189,7 @@ public class RAID1 extends AbstractRAID {
 
         // recover inconsistent replicas
         for (IBlobstore bs : bad) {
-            String replicaName = bs.getClass().getSimpleName();
+            String replicaName = bs.getName();
             logger.info("Detected inconsistent replica {}, file '{}'. Recovering...", replicaName, storagefilename);
             boolean success = bs.create(addPrefix(storagefilename), goodData);
             if (!success) {

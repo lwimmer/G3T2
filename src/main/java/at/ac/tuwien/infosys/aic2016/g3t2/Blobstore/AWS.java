@@ -48,6 +48,11 @@ public class AWS implements IBlobstore {
         s3.setRegion(Region.getRegion(Regions.fromName(regionStr)));
 	}
 	
+	@Override
+	public String getName() {
+	    return getClass().getSimpleName();
+	}
+	
 	/**
      * Create a new item in the S3 and store the passed data in it.
      *
