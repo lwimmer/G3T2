@@ -6,6 +6,27 @@
             $scope.files = response.data;
         });
         
+        $scope.getDownload = function(file) {
+        	var URL = '/file/'+file;
+        	
+            $http.get(URL, {
+            	dataType : "binary",
+                processData : false,
+                responseType : 'arraybuffer'
+            })
+            .then(function(response) {
+            	var downloadFile = response.data;
+            	var blob = new Blob([response.data], {type: "application/octet-stream"});
+            	var blobURL = window.URL.createObjectURL(blob);
+            	if (window.navigator.msSaveOrOpenBlob) {
+            	    // of course, IE needs special hand-holding....
+            	    window.navigator.msSaveOrOpenBlob(blob, 'something.pdf');
+            	} else {
+            	    window.open(blobURL);
+            	}
+            });
+        }
+        
         $scope.goDetail = function(file) {
         	giveFile.setFilename(file);
         	$localStorage.filename = file;

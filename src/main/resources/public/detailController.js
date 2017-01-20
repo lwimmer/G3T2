@@ -11,7 +11,6 @@
         var URL = '/file/'+filename;
     	
         $http.get(URL, {
- //       	params: { filename}
         })
         .then(function(response) {
             $scope.file = response.data;

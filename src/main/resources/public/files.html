@@ -7,7 +7,10 @@
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-resource.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ngStorage/0.3.11/ngStorage.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ng-dialog/0.6.6/js/ngDialog.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.0/angular-animate.min.js"></script>
  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-loading-bar/0.9.0/loading-bar.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-dialog/0.6.6/css/ngDialog.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-dialog/0.6.6/css/ngDialog-theme-default.min.css"> 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -43,10 +46,16 @@
                     		<td>{{file}}</td>
                     		<td class="text-right">
                         	<div class="btn-group flex-btn-group-container">
-                        		<a href="/file/{{ file }}" download class="btn btn-success btn-sm">
+          <!--               		<a href="/file/{{ file }}" download class="btn btn-success btn-sm">
 									<span class="glyphicon glyphicon-download-alt"></span>
 									<span class="hidden-xs hidden-sm">Download</span>
-								</a>
+								</a>  -->
+								<button type="button"
+                                    ng-click="getDownload(file)"
+                                    class="btn btn-success btn-sm">
+                                	<span class="glyphicon glyphicon-download-alt"></span>
+                                	<span class="hidden-xs hidden-sm">Download</span>
+                            	</button>
                            		<button type="button"
                                     ng-click="goDetail(file)"
                                     class="btn btn-info btn-sm">

@@ -1,4 +1,4 @@
-var app = angular.module("app", ['ngStorage', 'ngDialog']);
+var app = angular.module("app", ['ngStorage', 'ngDialog', 'angular-loading-bar']);
 
 app.directive('fileModel', ['$parse', function ($parse) {
     return {

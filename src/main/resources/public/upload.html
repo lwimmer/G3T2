@@ -7,6 +7,10 @@
  	<div ng-show="uploadForm.file.$invalid">
 		<p class="help-block" ng-show="uploadForm.file.$error.required">This field is required.</p>
 	</div>    
+	<input type="radio" ng-model="putraid" name="putraid" value="RAID1">
+    RAID1
+    <input type="radio" ng-model="putraid" name="putraid" value="RAID5">
+    RAID5
 	<div class="modal-footer">
       <button class="btn" ng-click="cancel()">Cancel</button>
       <button type="submit" class="btn btn-primary" ng-click="uploadFile()" ng-disabled="uploadForm.$invalid">Upload</button>
