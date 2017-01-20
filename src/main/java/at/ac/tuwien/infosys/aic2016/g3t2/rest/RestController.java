@@ -78,6 +78,7 @@ public class RestController {
         } catch (UserinteractionRequiredException e) {
             response.setHeader("Content-Disposition", "");
             response.setStatus(500);
+            response.setContentType("application/html");
             String message = e.getMessage();
             if (message == null) {
                 message = "Unknown error occured. User interaction required. Check server log for details.";
@@ -86,6 +87,7 @@ public class RestController {
             return message.getBytes();
         } catch (ItemMissingException e) {
             response.setHeader("Content-Disposition", "");
+            response.setContentType("application/html");
             response.setStatus(404);
             return "File not found".getBytes();
         }
