@@ -30,20 +30,15 @@
     </div>
     <br/>
     <dl class="dl-horizontal jh-entity-details">
-        <dt>Typ</dt>
+        <dt>Locations</dt>
+        <div ng-repeat="location in versions.locations">
         <dd>
-        	<span></span>
+        	<span>{{location.blobstore}}</span>
         </dd> 
+        </div>
+        <dt>Raid Type</dt>
+        <dd>{{versions.raidType}}</dd>
     </dl>
-	<button type="button" ng-click="goBack()" class="btn btn-info">
-        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
-    </button>
-    <a href="/file/{{ filename }}" download class="btn btn-success">
-		<span class="glyphicon glyphicon-download-alt"></span>
-		<span>Download</span>
-	</a>
-    <br>
-    <br>
     <!-- Versions -->
     <h3>Versions</h3>
     <div class="table-responsive">
@@ -51,17 +46,21 @@
             <thead>
                 <tr>
                     <th>Filename</th>
+                    <th>Version</th>
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="version in versions">
-                    <td></td>
-                </tr>
+            <tr ng-repeat="nr in versions.versions">
+            	<td>{{name[1]}}</td>	
+                <td>{{nr}}</td>
+               </tr>
             </tbody>
         </table>
     </div>
 </div>
-
+<button type="button" ng-click="goBack()" class="btn btn-info">
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
+    </button>
         </div>
 
         <div class="footer" ng-cloak>
