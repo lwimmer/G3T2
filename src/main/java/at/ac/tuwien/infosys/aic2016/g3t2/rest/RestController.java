@@ -5,8 +5,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -95,8 +93,8 @@ public class RestController {
      * @throws ItemMissingException
      *             if the file was not found
      */
-    @GetMapping("/file/{filename:.+}/locations")
-    public @ResponseBody FileMetadata readLocations(@PathVariable String filename,
+    @GetMapping("/file/{filename:.+}/metadata")
+    public @ResponseBody FileMetadata getMetadata(@PathVariable String filename,
             @RequestParam(required = false) Integer v)
             throws ItemMissingException, UserinteractionRequiredException {
         return getFile(filename, v).getMetadata();
