@@ -53,14 +53,21 @@ public class RestController {
      * 
      * @param filename
      *            the name of the file to get
+     * @param v
+     *            the version of the file to get
      * @return the raw file contents
      * @throws ItemMissingException
      *             if the file was not found
      */
     @GetMapping("/file/{filename:.+}")
-    public @ResponseBody byte[] read(@PathVariable String filename)
+    public @ResponseBody byte[] read(@PathVariable String filename,
+            @RequestParam(required = false) Integer v)
             throws ItemMissingException, UserinteractionRequiredException {
-        final File file = versionManager.read(filename);
+        final File file;
+        if (v != null)
+            file = versionManager.read(filename, v);
+        else
+            file = versionManager.read(filename);
         return file.getData();
     }
 
@@ -99,6 +106,8 @@ public class RestController {
      *            the name of the file to store
      * @param data
      *            the contents of the file
+     * @param raid
+     *            the raid type to use (e.g. RAID1, RAID5), defaults to RAID5
      * @return true if successful
      */
     @PutMapping("/file/{filename:.+}")
