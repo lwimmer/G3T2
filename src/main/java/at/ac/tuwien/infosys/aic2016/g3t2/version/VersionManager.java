@@ -42,6 +42,7 @@ public class VersionManager implements IVersionManager {
 	@Override
 	public boolean create(String filename, byte[] data, Storage raidType) {
 		try {
+			// TODO add raid prefix to filename??
 			int lastVersion = getLastVersion(filename);
 			return raidMap.get(raidType.toString()).create(filename + VERSION_SUFFIX + (lastVersion + 1), data);
 		} catch (ItemMissingException e) {
@@ -55,6 +56,8 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public boolean update(String filename, byte[] data) throws ItemMissingException, UserinteractionRequiredException {
+		// TODO needs to be optimized! (getLastVersion - getFileStorage)
+		// TODO add raid prefix to filename??
 		int lastVersion = getLastVersion(filename);
 		if (lastVersion == 0) {
 			throw new ItemMissingException();
@@ -136,6 +139,7 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public boolean delete(String filename) throws ItemMissingException {
+		// TODO needs to be optimized! (getLastVersion - getFileStorage)
 		int lastVersion = getLastVersion(filename);
 		if (lastVersion == 0) {
 			throw new ItemMissingException();
