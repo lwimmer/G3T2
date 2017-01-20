@@ -23,12 +23,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
-import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
+import at.ac.tuwien.infosys.aic2016.g3t2.RAID.FileMetadata;
+import at.ac.tuwien.infosys.aic2016.g3t2.RAID.RAIDType;
 import junitx.framework.ListAssert;
 
 @RunWith(SpringRunner.class)
@@ -41,7 +43,7 @@ public class RestTest {
     
     @Autowired
     private Collection<IBlobstore> blobstores;
-
+    
     private ObjectMapper om = new ObjectMapper();
     private CollectionLikeType stringListType = getStringListType(om);
     
@@ -52,60 +54,67 @@ public class RestTest {
 
     @Test
     public void testPutListDelete() throws Exception {
-        List<String> initialList = getFileList();
-
-        String filename = putRandomFile().fn;
-
-        List<String> expect = new ArrayList<>(initialList);
-        expect.add(filename);
-
-        List<String> list = getFileList();
-        ListAssert.assertEquals(expect, list);
-
-        deleteFile(filename);
-
-        list = getFileList();
-        ListAssert.assertEquals(initialList, list);
+        
+        for (RAIDType raidType : RAIDType.values()) {
+            List<String> initialList = getFileList();
+    
+            String filename = putRandomFile(raidType).fn;
+    
+            List<String> expect = new ArrayList<>(initialList);
+            expect.add(filename);
+    
+            List<String> list = getFileList();
+            ListAssert.assertEquals(expect, list);
+    
+            deleteFile(filename);
+    
+            list = getFileList();
+            ListAssert.assertEquals(initialList, list);
+        }
     }
     
     @Test
     public void testRecoverAfterLoss() throws Exception {
 
-        for (IBlobstore bs : blobstores) {
-            String bsName = bs.getClass().getSimpleName();
-            File file = putRandomFile();
-            
-            bs.delete(file.fn);
-            
-            assertTrue(getFileLocations(file.fn)
-                    .stream()
-                    .allMatch(l -> bsName.equals(l.getBlobstore()) ? l.isRecovered() : ! l.isRecovered()));
-            
-            byte[] data = getFile(file.fn);
-            assertArrayEquals(file.data, data);
-            
-            deleteFile(file.fn);
+        for (RAIDType raidType : RAIDType.values()) {
+            for (IBlobstore bs : blobstores) {
+                String bsName = bs.getClass().getSimpleName();
+                File file = putRandomFile(raidType);
+                
+                bs.delete(raidType.getPrefix() + file.fn + "_v1");
+                
+                assertTrue(getFileMetadata(file.fn).getLocations()
+                        .stream()
+                        .allMatch(l -> bsName.equals(l.getBlobstore()) ? l.isRecovered() : ! l.isRecovered()));
+                
+                byte[] data = getFile(file.fn);
+                assertArrayEquals(file.data, data);
+                
+                deleteFile(file.fn);
+            }
         }
     }
     
     @Test
     public void testRecoverAfterModification() throws Exception {
 
-        for (IBlobstore bs : blobstores) {
-            String bsName = bs.getClass().getSimpleName();
-            File file = putRandomFile();
-            
-            byte[] secondData = getRandomData(file.data.length);
-            bs.create(file.fn, secondData);
-            
-            assertTrue(getFileLocations(file.fn)
-                    .stream()
-                    .allMatch(l -> bsName.equals(l.getBlobstore()) ? l.isRecovered() : ! l.isRecovered()));
-            
-            byte[] data = getFile(file.fn);
-            assertArrayEquals(file.data, data);
-            
-            deleteFile(file.fn);
+        for (RAIDType raidType : RAIDType.values()) {
+            for (IBlobstore bs : blobstores) {
+                String bsName = bs.getClass().getSimpleName();
+                File file = putRandomFile(raidType);
+                
+                byte[] secondData = getRandomData(file.data.length);
+                bs.create(raidType.getPrefix() + file.fn + "_v1", secondData);
+                
+                assertTrue(getFileMetadata(file.fn).getLocations()
+                        .stream()
+                        .allMatch(l -> bsName.equals(l.getBlobstore()) ? l.isRecovered() : ! l.isRecovered()));
+                
+                byte[] data = getFile(file.fn);
+                assertArrayEquals(file.data, data);
+                
+                deleteFile(file.fn);
+            }
         }
     }
     
@@ -129,16 +138,19 @@ public class RestTest {
         byte[] data;
     }
     
-    private File putRandomFile() throws Exception {
+    private File putRandomFile(RAIDType raidType) throws Exception {
         File file = new File();
         file.fn = getRandomFilename();
         file.data = getRandomData();
-        putFile(file.fn, file.data);
+        putFile(file.fn, file.data, raidType);
         return file;
     }
     
-    private void putFile(String filename, byte[] data) throws Exception {
-        mm.perform(put(getUrl(filename)).content(data)).andExpect(status().isOk()).andExpect(content().string("true"));
+    private void putFile(String filename, byte[] data, RAIDType raidType) throws Exception {
+        final MockHttpServletRequestBuilder put = put(getUrl(filename));
+        if (raidType != null)
+            put.param("raid", raidType.toString());
+        mm.perform(put.content(data)).andExpect(status().isOk()).andExpect(content().string("true"));
     }
 
     private List<String> getFileList() throws Exception {
@@ -151,9 +163,9 @@ public class RestTest {
         return mm.perform(get(getUrl(filename))).andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
     }
     
-    private List<Location> getFileLocations(String filename) throws Exception {
+    private FileMetadata getFileMetadata(String filename) throws Exception {
         String data = mm.perform(get(getUrl(filename) + "/locations")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        return om.readValue(data, om.getTypeFactory().constructCollectionLikeType(List.class, Location.class));
+        return om.readValue(data, FileMetadata.class);
     }
     
     private String getUrl(String filename) {

@@ -1,42 +1,51 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Blob;
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.IBlobstore;
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
+import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 
 @Service
-@Lazy
 public class RAID1 extends AbstractRAID {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final static int MINIMUM_BLOBSTORES = 1;
+    protected final static RAIDType RAID_TYPE = RAIDType.RAID1;
     private final ExecutorService pool = Executors.newCachedThreadPool();
     
     public RAID1(Collection<IBlobstore> blobstores) {
-        super(MINIMUM_BLOBSTORES, blobstores);
+        super(MINIMUM_BLOBSTORES, RAID_TYPE, blobstores);
     }
 
     public RAID1(IBlobstore... blobstoresArray) {
-        super(MINIMUM_BLOBSTORES, blobstoresArray);
+        super(MINIMUM_BLOBSTORES, RAID_TYPE, blobstoresArray);
     }
 
     @Autowired
     public RAID1(Map<String, IBlobstore> blobstoresMap, 
             @Value("#{'${disabled_blobstores:}'.split(',')}") List<String> disabledBlobstores) {
-        super(MINIMUM_BLOBSTORES, blobstoresMap, disabledBlobstores);
+        super(MINIMUM_BLOBSTORES, RAID_TYPE, blobstoresMap, disabledBlobstores);
     }
     
     @Override
@@ -47,7 +56,7 @@ public class RAID1 extends AbstractRAID {
         for (IBlobstore bs : this.blobstores) {
             Callable<Boolean> worker = () -> {
                 logger.info("Uploading file {} to {}", storagefilename, bs.getClass().getSimpleName());
-                Boolean ret = bs.create(storagefilename, data);
+                Boolean ret = bs.create(addPrefix(storagefilename), data);
                 logger.info("Finished uploading to {}", bs.getClass().getSimpleName());
                 return ret;
             };
@@ -76,7 +85,7 @@ public class RAID1 extends AbstractRAID {
         boolean deleted = false;
 
         for (IBlobstore bs : this.blobstores) {
-            Callable<Boolean> worker = () -> bs.delete(storagefilename);
+            Callable<Boolean> worker = () -> bs.delete(addPrefix(storagefilename));
             futures.add(pool.submit(worker));
         }
 
@@ -122,7 +131,7 @@ public class RAID1 extends AbstractRAID {
                 logger.info("Fetching file {} from {}", storagefilename, bs.getClass().getSimpleName());
                 Blob blob = null;
                 try {
-                    blob = bs.read(storagefilename);
+                    blob = bs.read(addPrefix(storagefilename));
                 } catch (ItemMissingException e) {
                 }
                 logger.info("Finished fetching from {}", bs.getClass().getSimpleName());
@@ -149,7 +158,7 @@ public class RAID1 extends AbstractRAID {
                     }
 
                     dataItems.put(bs, blob.getData());
-                    locations.put(bs, new Location(bs.getClass().getSimpleName(), storagefilename, true, false));
+                    locations.put(bs, new Location(bs.getClass().getSimpleName(), addPrefix(storagefilename), true, false));
                 } else {
                     bad.add(bs);
                 }
@@ -182,11 +191,11 @@ public class RAID1 extends AbstractRAID {
         for (IBlobstore bs : bad) {
             String replicaName = bs.getClass().getSimpleName();
             logger.info("Detected inconsistent replica {}, file '{}'. Recovering...", replicaName, storagefilename);
-            boolean success = bs.create(storagefilename, goodData);
+            boolean success = bs.create(addPrefix(storagefilename), goodData);
             if (!success) {
                 logger.error("Failed to restore inconsistent replica");
             } else {
-                locations.put(bs, new Location(replicaName, storagefilename, true, true));
+                locations.put(bs, new Location(replicaName, addPrefix(storagefilename), true, true));
                 logger.info("Recovery of replica {}, file '{}' complete.", replicaName, storagefilename);
             }
         }
@@ -196,7 +205,7 @@ public class RAID1 extends AbstractRAID {
             locationList.add(locations.get(bs));
         }
 
-        return new File(goodData, locationList);
+        return new File(goodData, new FileMetadata(RAIDType.RAID1, locationList));
     }
 
     private void categorizeReplicaByHash(HashMap<String, ArrayList<IBlobstore>> hashes, Set<IBlobstore> bad, Set<IBlobstore> good) throws UserinteractionRequiredException {

@@ -29,19 +29,20 @@ public class RAID5 extends AbstractRAID {
     
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final static int MINIMUM_BLOBSTORES = 3;
+    private final static RAIDType RAID_TYPE = RAIDType.RAID5;
 
     public RAID5(Collection<IBlobstore> blobstores) {
-        super(MINIMUM_BLOBSTORES, blobstores);
+        super(MINIMUM_BLOBSTORES, RAID_TYPE, blobstores);
     }
 
     public RAID5(IBlobstore... blobstoresArray) {
-        super(MINIMUM_BLOBSTORES, blobstoresArray);
+        super(MINIMUM_BLOBSTORES, RAID_TYPE, blobstoresArray);
     }
 
     @Autowired
     public RAID5(Map<String, IBlobstore> blobstoresMap, 
             @Value("#{'${disabled_blobstores:}'.split(',')}") List<String> disabledBlobstores) {
-        super(MINIMUM_BLOBSTORES, blobstoresMap, disabledBlobstores);
+        super(MINIMUM_BLOBSTORES, RAID_TYPE, blobstoresMap, disabledBlobstores);
     }
 
     protected int numParts() {
@@ -69,7 +70,7 @@ public class RAID5 extends AbstractRAID {
     protected RAID5File readRAID5File(IBlobstore blobstore, String storagefilename) {
         try {
             final Location location = new Location(blobstore.getClass().getSimpleName(), storagefilename);
-            return new RAID5File(location, blobstore.read(storagefilename).getData());
+            return new RAID5File(location, blobstore.read(addPrefix(storagefilename)).getData());
         } catch (ItemMissingException | IOException e) {
             return null;
         }
@@ -92,7 +93,7 @@ public class RAID5 extends AbstractRAID {
         final AtomicInteger counter = new AtomicInteger();
         return blobstores
             .parallelStream()
-            .map(bs -> bs.create(storagefilename, parts.get(counter.getAndIncrement()).encode()))
+            .map(bs -> bs.create(addPrefix(storagefilename), parts.get(counter.getAndIncrement()).encode()))
             .allMatch(result -> result);
     }
 
@@ -106,7 +107,7 @@ public class RAID5 extends AbstractRAID {
     
     @Override
     public boolean delete(String storagefilename) throws ItemMissingException {
-        final int numDeleted = blobstores.parallelStream().map(bs -> safeDelete(bs, storagefilename)).mapToInt(r -> r ? 1 : 0).sum();
+        final int numDeleted = blobstores.parallelStream().map(bs -> safeDelete(bs, addPrefix(storagefilename))).mapToInt(r -> r ? 1 : 0).sum();
         if (numDeleted == 0)
             throw new ItemMissingException();
         return numDeleted == blobstores.size();
@@ -163,11 +164,11 @@ public class RAID5 extends AbstractRAID {
             if (parity == null) { // need to recover parity
                 parity = new RAID5File(fileSize, numParts, -1, true, missingBlock);
                 parity.setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, false, true));
-                targetBlobstore.get().create(storagefilename, parity.encode());
+                targetBlobstore.get().create(addPrefix(storagefilename), parity.encode());
             } else if (missingPart >= 0) { // need to recover a part
                 dataParts[missingPart] = new RAID5File(fileSize, numParts, missingPart, false, missingBlock);
                 dataParts[missingPart].setLocation(new Location(targetBlobstore.get().getClass().getSimpleName(), storagefilename, true, true));
-                targetBlobstore.get().create(storagefilename, dataParts[missingPart].encode());
+                targetBlobstore.get().create(addPrefix(storagefilename), dataParts[missingPart].encode());
             }
         }
         
@@ -179,7 +180,7 @@ public class RAID5 extends AbstractRAID {
             }
         }
         final List<Location> locations = Stream.concat(Arrays.stream(dataParts), Stream.of(parity)).map(RAID5File::getLocation).collect(Collectors.toList());
-        return new File(Arrays.copyOf(baos.toByteArray(), (int)fileSize), locations);
+        return new File(Arrays.copyOf(baos.toByteArray(), (int)fileSize), new FileMetadata(RAIDType.RAID5, locations));
     }
 
 }

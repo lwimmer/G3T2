@@ -9,14 +9,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
 import at.ac.tuwien.infosys.aic2016.g3t2.RAID.File;
+import at.ac.tuwien.infosys.aic2016.g3t2.RAID.FileMetadata;
+import at.ac.tuwien.infosys.aic2016.g3t2.RAID.RAIDType;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 import at.ac.tuwien.infosys.aic2016.g3t2.version.IVersionManager;
-import at.ac.tuwien.infosys.aic2016.g3t2.version.Storage;
 
 @Controller
 public class RestController {
@@ -78,10 +80,10 @@ public class RestController {
      *             if the file was not found
      */
     @GetMapping("/file/{filename:.+}/locations")
-    public @ResponseBody List<Location> readLocations(@PathVariable String filename)
+    public @ResponseBody FileMetadata readLocations(@PathVariable String filename)
             throws ItemMissingException, UserinteractionRequiredException {
         final File file = versionManager.read(filename);
-        return file.getLocations();
+        return file.getMetadata();
     }
 
     /**
@@ -100,9 +102,9 @@ public class RestController {
      * @return true if successful
      */
     @PutMapping("/file/{filename:.+}")
-    public @ResponseBody boolean create(@PathVariable String filename, @RequestBody byte[] data) {
-    	//TODO do we need to give raid type as a parameter or will the filename include raid type as prefix?
-        return versionManager.create(filename, data, Storage.RAID1);
+    public @ResponseBody boolean create(@PathVariable String filename, @RequestBody byte[] data,
+            @RequestParam(required = false) String raid) {
+        return versionManager.create(filename, data, raid == null ? null : RAIDType.valueOf(raid));
     }
 
     /**

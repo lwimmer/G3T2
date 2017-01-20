@@ -9,11 +9,11 @@ import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
  */
 public class File {
     private final byte[] data;
-    private final List<Location> locations;
+    private final FileMetadata metadata;
 
-    public File(byte[] data, List<Location> locations) {
+    public File(byte[] data, FileMetadata metadata) {
         this.data = data;
-        this.locations = locations;
+        this.metadata = metadata;
     }
     
     /**
@@ -25,10 +25,21 @@ public class File {
     }
 
     /**
+     * Return the metadata of the file
+     * @return file metadata
+     */
+    public FileMetadata getMetadata() {
+        return metadata;
+    }
+    
+    /**
      * Return a list of locations that describe where the file is saved.
      * @return list of locations
      */
     public List<Location> getLocations() {
-        return locations;
+        if (metadata == null)
+            return null;
+        return metadata.getLocations();
     }
+    
 }

@@ -1,6 +1,7 @@
 package at.ac.tuwien.infosys.aic2016.g3t2.version;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -13,7 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.RAID.File;
-import at.ac.tuwien.infosys.aic2016.g3t2.RAID.IRAID;
+import at.ac.tuwien.infosys.aic2016.g3t2.RAID.RAIDSwitch;
+import at.ac.tuwien.infosys.aic2016.g3t2.RAID.RAIDType;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
 
@@ -24,26 +26,31 @@ public class VersionManager implements IVersionManager {
 
 	private final String VERSION_REGEX = "_[v][0-9]{0,2}$";
 
-	private final String RAID_REGEX = "^[r][1,5]";
-
 	private final String VERSION_SUFFIX = "_v";
-
+	
 	@Autowired
-	private Map<String, IRAID> raidMap;
+	private RAIDSwitch raid;
 
 	@PostConstruct
 	private void init() {
 	}
 
 	/**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean create(String storagefilename, byte[] data) {
+            return create(storagefilename, data, null);
+        }
+	
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean create(String filename, byte[] data, Storage raidType) {
+	public boolean create(String filename, byte[] data, RAIDType raidType) {
 		try {
-			// TODO add raid prefix to filename??
 			int lastVersion = getLastVersion(filename);
-			return raidMap.get(raidType.toString()).create(filename + VERSION_SUFFIX + (lastVersion + 1), data);
+			return raid.create(filename + VERSION_SUFFIX + (lastVersion + 1), data, raidType);
 		} catch (ItemMissingException e) {
 			e.printStackTrace();
 		}
@@ -56,7 +63,6 @@ public class VersionManager implements IVersionManager {
 	@Override
 	public boolean update(String filename, byte[] data) throws ItemMissingException, UserinteractionRequiredException {
 		// TODO needs to be optimized! (getLastVersion - getFileStorage)
-		// TODO add raid prefix to filename??
 		int lastVersion = getLastVersion(filename);
 		if (lastVersion == 0) {
 			throw new ItemMissingException();
@@ -66,27 +72,7 @@ public class VersionManager implements IVersionManager {
 		if (!filename.matches(VERSION_REGEX)) {
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + lastVersion;
 		}
-		Storage type = getFileStorageType(fileNameWithVersionSuffix);
-
-		return raidMap.get(type).create(filename + VERSION_SUFFIX + (lastVersion + 1), data);
-	}
-
-	private Storage getFileStorageType(String fileNameWithVersionSuffix) throws ItemMissingException {
-		List<String> raid1FileList = listFiles(Storage.RAID1);
-		for (String file : raid1FileList) {
-			if (file.equals(fileNameWithVersionSuffix)) {
-				return Storage.RAID1;
-			}
-		}
-
-		List<String> raid5FileList = listFiles(Storage.RAID5);
-		for (String file : raid5FileList) {
-			if (file.equals(fileNameWithVersionSuffix)) {
-				return Storage.RAID5;
-			}
-		}
-
-		throw new ItemMissingException();
+		return raid.create(filename + VERSION_SUFFIX + (lastVersion + 1), data);
 	}
 
 	/**
@@ -107,9 +93,7 @@ public class VersionManager implements IVersionManager {
 		if (!filename.matches(VERSION_REGEX)) {
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + version;
 		}
-		Storage storageType = getFileStorageType(fileNameWithVersionSuffix);
-
-		return raidMap.get(storageType).read(fileNameWithVersionSuffix);
+                return raid.read(fileNameWithVersionSuffix);
 	}
 
 	/**
@@ -117,7 +101,7 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public int getLastVersion(String filename) throws ItemMissingException {
-		List<String> fileList = listFiles();
+		List<String> fileList = raid.listFiles();
 
 		int lastVersion = 0;
 		for (String name : fileList) {
@@ -148,12 +132,10 @@ public class VersionManager implements IVersionManager {
 		if (!filename.matches(VERSION_REGEX)) {
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + lastVersion;
 		}
-		Storage storageType = getFileStorageType(fileNameWithVersionSuffix);
-
 		boolean allVersionsDeleted = true;
 		for (; lastVersion > 0; lastVersion--) {
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + lastVersion;
-			boolean result = raidMap.get(storageType).delete(fileNameWithVersionSuffix);
+			boolean result = raid.delete(fileNameWithVersionSuffix);
 			if (!result) {
 				allVersionsDeleted = false;
 			}
@@ -167,7 +149,7 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public List<String> getFileVersions(String filename) throws ItemMissingException {
-		List<String> fileList = listFiles();
+		List<String> fileList = raid.listFiles();
 		List<String> fileVersionList = new ArrayList<String>();
 
 		for (String name : fileList) {
@@ -184,19 +166,9 @@ public class VersionManager implements IVersionManager {
 	 */
 	@Override
 	public List<String> listFiles() {
-		return Arrays.asList(Storage.values())
-				.parallelStream()
-				.flatMap(s -> this.listFiles(s).stream())
-				.distinct()
-				.collect(Collectors.toList());
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public List<String> listFiles(Storage storageType) {
-		return raidMap.get(storageType.toString()).listFiles();
+	    return raid.listFiles().stream()
+	        .map(n -> n.replaceFirst(VERSION_REGEX, ""))
+	        .distinct().collect(Collectors.toList());
 	}
 
 	private int extractFileVersion(String filename) {
@@ -209,4 +181,5 @@ public class VersionManager implements IVersionManager {
 		}
 		return -1;
 	}
+
 }
