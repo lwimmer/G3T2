@@ -46,6 +46,13 @@ public class RestController {
         return versionManager.listFiles();
     }
 
+    protected File getFile(String filename, Integer v) throws ItemMissingException, UserinteractionRequiredException {
+        if (v != null)
+            return versionManager.read(filename, v);
+        else
+            return versionManager.read(filename);
+    }
+    
     /**
      * Gets the content of a file.
      * 
@@ -67,13 +74,8 @@ public class RestController {
     public @ResponseBody byte[] read(@PathVariable String filename,
             @RequestParam(required = false) Integer v, HttpServletResponse response)
             throws ItemMissingException, UserinteractionRequiredException {
-        final File file;
-        if (v != null)
-            file = versionManager.read(filename, v);
-        else
-            file = versionManager.read(filename);
         response.setHeader("Content-Disposition", "attachment; filename=" + filename);
-        return file.getData();
+        return getFile(filename, v).getData();
     }
 
     /**
@@ -87,15 +89,17 @@ public class RestController {
      * 
      * @param filename
      *            the name of the file to get
+     * @param v
+     *            the version of the file to get
      * @return a list of {@link Location}s
      * @throws ItemMissingException
      *             if the file was not found
      */
     @GetMapping("/file/{filename:.+}/locations")
-    public @ResponseBody FileMetadata readLocations(@PathVariable String filename)
+    public @ResponseBody FileMetadata readLocations(@PathVariable String filename,
+            @RequestParam(required = false) Integer v)
             throws ItemMissingException, UserinteractionRequiredException {
-        final File file = versionManager.read(filename);
-        return file.getMetadata();
+        return getFile(filename, v).getMetadata();
     }
 
     /**
