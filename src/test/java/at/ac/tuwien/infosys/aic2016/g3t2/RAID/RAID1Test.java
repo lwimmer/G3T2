@@ -3,6 +3,7 @@ package at.ac.tuwien.infosys.aic2016.g3t2.RAID;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.validateMockitoUsage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,10 +29,18 @@ public class RAID1Test {
         this.bs1 = Mockito.mock(IBlobstore.class);
         this.bs2 = Mockito.mock(IBlobstore.class);
         this.bs3 = Mockito.mock(IBlobstore.class);
+        
+        Mockito.when(bs1.getName()).thenReturn("BS1");
+        Mockito.when(bs2.getName()).thenReturn("BS2");
+        Mockito.when(bs3.getName()).thenReturn("BS3");
     }
 
     @After
     public void tearDown() {
+        Mockito.verify(bs1, Mockito.atLeast(0)).getName();
+        Mockito.verify(bs2, Mockito.atLeast(0)).getName();
+        Mockito.verify(bs3, Mockito.atLeast(0)).getName();
+        
         Mockito.verifyNoMoreInteractions(bs1);
         Mockito.verifyNoMoreInteractions(bs2);
         Mockito.verifyNoMoreInteractions(bs3);
