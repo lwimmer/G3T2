@@ -120,7 +120,7 @@ public class VersionManager implements IVersionManager {
 			int version = versions.get(i);
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + version;
 
-			logger.info("Deleting the file {} ", fileNameWithVersionSuffix);
+			logger.info("Deleting the file {} with the version {}", filename, version);
 			boolean result = raid.delete(fileNameWithVersionSuffix);
 			if (!result) {
 				allVersionsDeleted = false;
