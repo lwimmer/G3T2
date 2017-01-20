@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>RAID Storage</title>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-resource.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ngStorage/0.3.11/ngStorage.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ng-dialog/0.6.6/js/ngDialog.js"></script>
+ 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-dialog/0.6.6/css/ngDialog.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ng-dialog/0.6.6/css/ngDialog-theme-default.min.css"> 
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<body ng-app="app" ng-strict-di>
+<div class="text-center">
+	<h1>RAID Storage</h1>
+</div>
+<div ng-controller="FileController">
+    <div class="container">
+        <div class="well">
+            
+    		<div class="container-fluid">
+       		 	<div class="row">
+        			<h2>Files</h2>
+                	<button class="btn btn-primary" ng-click="openUpload()" >
+                    	<span class="glyphicon glyphicon-plus"></span>
+                    	<span>Upload file</span>
+                	</button>
+       			</div>
+   			 </div>
+   			 <br/>
+   			 
+    		<div class="table-responsive">
+       			 <table class="jh-table table table-striped">
+           			<thead>
+               			 <tr>
+                   			 <th>Filename</th>
+               			 </tr>
+          			 </thead>
+           			 <tbody>
+                		<tr ng-repeat="file in files track by file">
+                    		<td>{{file}}</td>
+                    		<td class="text-right">
+                        	<div class="btn-group flex-btn-group-container">
+                        		<a href="/file/{{ file }}" download class="btn btn-success btn-sm">
+									<span class="glyphicon glyphicon-download-alt"></span>
+									<span class="hidden-xs hidden-sm">Download</span>
+								</a>
+                           		<button type="button"
+                                    ng-click="goDetail(file)"
+                                    class="btn btn-info btn-sm">
+                                	<span class="glyphicon glyphicon-eye-open"></span>
+                                	<span class="hidden-xs hidden-sm">Details</span>
+                            	</button>
+                            	<button type="button" 
+                            		ng-click="openDelete(file)" 
+                            		class="btn btn-danger btn-sm pull-right">
+									<span class="glyphicon glyphicon-remove-circle"></span>
+									<span class="hidden-xs hidden-sm">Delete</span>
+								</button>
+                        	</div>
+                    		</td>
+                		</tr>
+            		</tbody>
+        		</table>
+    		</div>
+		</div>
+
+	</div>
+
+        <div class="footer" ng-cloak>
+            <p>AIC WS 2016/17, Group 3, Topic 2</p>
+        </div>
+        
+        
+</div>
+
+  
+    
+    <script src="module.js"></script>
+<!--     <script src="states.js"></script> -->
+    <script src="fileController.js"></script>
+    <script src="detailController.js"></script>
+    <script src="deleteController.js"></script>
+    <script src="uploadController.js"></script>
+</div>
+</body>
+</html>
