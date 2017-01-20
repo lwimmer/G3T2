@@ -2,7 +2,11 @@ package at.ac.tuwien.infosys.aic2016.g3t2.rest;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +46,13 @@ public class RestController {
         return versionManager.listFiles();
     }
 
+    protected File getFile(String filename, Integer v) throws ItemMissingException, UserinteractionRequiredException {
+        if (v != null)
+            return versionManager.read(filename, v);
+        else
+            return versionManager.read(filename);
+    }
+    
     /**
      * Gets the content of a file.
      * 
@@ -61,14 +72,10 @@ public class RestController {
      */
     @GetMapping("/file/{filename:.+}")
     public @ResponseBody byte[] read(@PathVariable String filename,
-            @RequestParam(required = false) Integer v)
+            @RequestParam(required = false) Integer v, HttpServletResponse response)
             throws ItemMissingException, UserinteractionRequiredException {
-        final File file;
-        if (v != null)
-            file = versionManager.read(filename, v);
-        else
-            file = versionManager.read(filename);
-        return file.getData();
+        response.setHeader("Content-Disposition", "attachment; filename=" + filename);
+        return getFile(filename, v).getData();
     }
 
     /**
@@ -82,15 +89,17 @@ public class RestController {
      * 
      * @param filename
      *            the name of the file to get
+     * @param v
+     *            the version of the file to get
      * @return a list of {@link Location}s
      * @throws ItemMissingException
      *             if the file was not found
      */
     @GetMapping("/file/{filename:.+}/locations")
-    public @ResponseBody FileMetadata readLocations(@PathVariable String filename)
+    public @ResponseBody FileMetadata readLocations(@PathVariable String filename,
+            @RequestParam(required = false) Integer v)
             throws ItemMissingException, UserinteractionRequiredException {
-        final File file = versionManager.read(filename);
-        return file.getMetadata();
+        return getFile(filename, v).getMetadata();
     }
 
     /**
