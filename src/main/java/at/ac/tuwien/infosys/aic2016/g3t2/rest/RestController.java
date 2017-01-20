@@ -73,7 +73,22 @@ public class RestController {
             @RequestParam(required = false) Integer v, HttpServletResponse response)
             throws ItemMissingException, UserinteractionRequiredException {
         response.setHeader("Content-Disposition", "attachment; filename=" + filename);
-        return getFile(filename, v).getData();
+        try {
+            return getFile(filename, v).getData();
+        } catch (UserinteractionRequiredException e) {
+            response.setHeader("Content-Disposition", "");
+            response.setStatus(500);
+            String message = e.getMessage();
+            if (message == null) {
+                message = "Unknown error occured. User interaction required. Check server log for details.";
+            }
+            message = "User interaction required: " + message;
+            return message.getBytes();
+        } catch (ItemMissingException e) {
+            response.setHeader("Content-Disposition", "");
+            response.setStatus(404);
+            return "File not found".getBytes();
+        }
     }
 
     /**
