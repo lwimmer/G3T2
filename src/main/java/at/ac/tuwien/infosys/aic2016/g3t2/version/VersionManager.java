@@ -44,6 +44,7 @@ public class VersionManager implements IVersionManager {
 	public boolean create(String filename, byte[] data, RAIDType raidType) {
 		try {
 			int lastVersion = getLastVersion(filename);
+			logger.info("Creating the file {} with version name", filename);
 			return raid.create(filename + VERSION_SUFFIX + (lastVersion + 1), data, raidType);
 		} catch (ItemMissingException e) {
 			e.printStackTrace();
@@ -59,6 +60,7 @@ public class VersionManager implements IVersionManager {
 		int lastVersion = getLastVersion(filename);
 		File file = read(filename, lastVersion);
 		file.getMetadata().setVersions(getFileVersions(filename));
+		logger.info("Reading the file {} ", filename);
 		return file;
 	}
 
@@ -71,6 +73,7 @@ public class VersionManager implements IVersionManager {
 		if (!filename.matches(VERSION_REGEX)) {
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + version;
 		}
+		logger.info("Reading the file {} with the version {}", filename, version);
 		return raid.read(fileNameWithVersionSuffix);
 	}
 
@@ -109,12 +112,19 @@ public class VersionManager implements IVersionManager {
 		if (!filename.matches(VERSION_REGEX)) {
 			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + lastVersion;
 		}
+
+		logger.info("Deleting the file {} and its all versions ", filename);
 		boolean allVersionsDeleted = true;
-		for (; lastVersion > 0; lastVersion--) {
-			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + lastVersion;
+		List<Integer> versions = getFileVersions(filename);
+		for (int i = 0; i < versions.size(); i++) {
+			int version = versions.get(i);
+			fileNameWithVersionSuffix = filename + VERSION_SUFFIX + version;
+
+			logger.info("Deleting the file {} ", fileNameWithVersionSuffix);
 			boolean result = raid.delete(fileNameWithVersionSuffix);
 			if (!result) {
 				allVersionsDeleted = false;
+				logger.error("Not all versions of the file {} are deleted", filename);
 			}
 		}
 
