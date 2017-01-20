@@ -17,6 +17,9 @@
         	$http.delete(URL).then(function(response) {
                 $scope.files = response.data;
                 $window.location.href = '/files.html';
+            }, function errorCallback(response) {
+            	alert("Delete failed!");
+            	console.log(response.data);
             }).finally(function() {
                 cfpLoadingBar.complete();
             });

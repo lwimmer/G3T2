@@ -13,12 +13,14 @@
             var file = $scope.myFile;
            
             var putraid = $scope.putraid;
-            console.log(putraid);
             var uploadUrl = "/file/"+file.name;
             
             $http.put(uploadUrl, file, { params: { raid: putraid } }).then(function(response) {
                 $scope.files = response.data;
                 $window.location.href = '/files.html';
+            }, function errorCallback(response) {
+            	alert("Upload failed!");
+            	console.log(response.data);
             }).finally(function() {
                 cfpLoadingBar.complete();
             });

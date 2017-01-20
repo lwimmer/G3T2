@@ -1,7 +1,7 @@
 <div ng-cotroller="UploadController">
 <h4>Upload file</h4>
 <div>
-<form name="uploadForm" novalidate ng-submit="uploadFile()" show-validation enctype="multipart/form-data">
+<form name="uploadForm" novalidate show-validation enctype="multipart/form-data">
 	Choose file: 
 	<input type="file" ngf-select file-model="myFile" class="form-control" name="file" id="field_file" required  />
  	<div ng-show="uploadForm.file.$invalid">
