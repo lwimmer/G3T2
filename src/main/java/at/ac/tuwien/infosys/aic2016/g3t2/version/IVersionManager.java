@@ -42,9 +42,9 @@ public interface IVersionManager extends IRAID {
      * Return file versions
      *
      * @param filename name of the file
-     * @return list of versions as String
+     * @return list of versions as Integer
      */
-	List<String> getFileVersions(String filename) throws ItemMissingException;
+	List<Integer> getFileVersions(String filename) throws ItemMissingException;
 
 	/**
      * Return the last version of the file.
