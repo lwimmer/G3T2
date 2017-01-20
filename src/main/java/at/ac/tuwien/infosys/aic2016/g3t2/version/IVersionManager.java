@@ -21,15 +21,6 @@ public interface IVersionManager extends IRAID {
 	boolean create(String filename, byte[] data, RAIDType raidType);
 
 	/**
-     * Update a file.
-     *
-     * @param filename name of the file
-     * @param data content of the file
-     * @return true if successfully created
-     */
-	boolean update(String filename, byte[] data) throws ItemMissingException, UserinteractionRequiredException;
-
-	/**
      * Read a file.
      *
      * @param filename name of the file

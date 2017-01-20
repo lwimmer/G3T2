@@ -55,19 +55,6 @@ public class VersionManager implements IVersionManager {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean update(String filename, byte[] data) throws ItemMissingException, UserinteractionRequiredException {
-		int lastVersion = getLastVersion(filename);
-		if (lastVersion == 0) {
-			throw new ItemMissingException();
-		}
-
-		return raid.create(filename + VERSION_SUFFIX + (lastVersion + 1), data);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public File read(String filename) throws ItemMissingException, UserinteractionRequiredException {
 		int lastVersion = getLastVersion(filename);
 		File file = read(filename, lastVersion);
