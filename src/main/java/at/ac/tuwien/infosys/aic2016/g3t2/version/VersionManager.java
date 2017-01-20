@@ -70,7 +70,9 @@ public class VersionManager implements IVersionManager {
 	@Override
 	public File read(String filename) throws ItemMissingException, UserinteractionRequiredException {
 		int lastVersion = getLastVersion(filename);
-		return read(filename, lastVersion);
+		File file = read(filename, lastVersion);
+		file.getMetadata().setVersions(getFileVersions(filename));
+		return file;
 	}
 
 	/**
@@ -136,14 +138,15 @@ public class VersionManager implements IVersionManager {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public List<String> getFileVersions(String filename) throws ItemMissingException {
+	public List<Integer> getFileVersions(String filename) throws ItemMissingException {
 		List<String> fileList = raid.listFiles();
-		List<String> fileVersionList = new ArrayList<String>();
+		List<Integer> fileVersionList = new ArrayList<Integer>();
 
 		for (String name : fileList) {
 			String actualName = name.split(VERSION_REGEX)[0];
 			if (actualName.equals(filename)) {
-				fileVersionList.add(name);
+				int version = extractFileVersion(name);
+				fileVersionList.add(version);
 			}
 		}
 		return fileVersionList;
@@ -168,5 +171,4 @@ public class VersionManager implements IVersionManager {
 		}
 		return -1;
 	}
-
 }
