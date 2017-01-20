@@ -34,7 +34,7 @@ public interface IVersionManager {
      * @return true if successfully created
      */
 	boolean delete(String filename) throws ItemMissingException;
-
+	
 	/**
      * Read a file.
      *
