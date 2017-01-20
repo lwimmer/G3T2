@@ -9,6 +9,12 @@ cp src/main/resources/credentials.properties.template src/main/resources/credent
 ```
 and edit `credentials.properties` to your needs.
 
+#### AWS S3
+For AWS authentication you need to do the following:
+
+Create a unique S3 bucket.
+Write the chosen region and bucket name in the credentials file. 
+Copy your Access Key ID and Secret Access Key and put them in the credentials file.
 
 #### Dropbox
 For Dropbox authentication you need to do the following:
