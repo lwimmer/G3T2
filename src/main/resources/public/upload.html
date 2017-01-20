@@ -1,0 +1,16 @@
+<div ng-cotroller="UploadController">
+<h4>Upload file</h4>
+<div>
+<form name="uploadForm" novalidate ng-submit="uploadFile()" show-validation enctype="multipart/form-data">
+	Choose file: 
+	<input type="file" ngf-select file-model="myFile" class="form-control" name="file" id="field_file" required  />
+ 	<div ng-show="uploadForm.file.$invalid">
+		<p class="help-block" ng-show="uploadForm.file.$error.required">This field is required.</p>
+	</div>    
+	<div class="modal-footer">
+      <button class="btn" ng-click="cancel()">Cancel</button>
+      <button type="submit" class="btn btn-primary" ng-click="uploadFile()" ng-disabled="uploadForm.$invalid">Upload</button>
+	</div>
+</form>
+</div>
+</div>
