@@ -13,15 +13,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import at.ac.tuwien.infosys.aic2016.g3t2.Blobstore.Location;
 import at.ac.tuwien.infosys.aic2016.g3t2.RAID.File;
-import at.ac.tuwien.infosys.aic2016.g3t2.RAID.RAID1;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.ItemMissingException;
 import at.ac.tuwien.infosys.aic2016.g3t2.exceptions.UserinteractionRequiredException;
+import at.ac.tuwien.infosys.aic2016.g3t2.version.IVersionManager;
+import at.ac.tuwien.infosys.aic2016.g3t2.version.Storage;
 
 @Controller
 public class RestController {
 
     @Autowired
-    private RAID1 storage;
+    private IVersionManager versionManager;
 
     /**
      * Lists all files in the storage.
@@ -36,7 +37,7 @@ public class RestController {
      */
     @GetMapping("/file")
     public @ResponseBody List<String> listFiles() {
-        return storage.listFiles();
+        return versionManager.listFiles();
     }
 
     /**
@@ -57,7 +58,7 @@ public class RestController {
     @GetMapping("/file/{filename:.+}")
     public @ResponseBody byte[] read(@PathVariable String filename)
             throws ItemMissingException, UserinteractionRequiredException {
-        final File file = storage.read(filename);
+        final File file = versionManager.read(filename);
         return file.getData();
     }
 
@@ -79,7 +80,7 @@ public class RestController {
     @GetMapping("/file/{filename:.+}/locations")
     public @ResponseBody List<Location> readLocations(@PathVariable String filename)
             throws ItemMissingException, UserinteractionRequiredException {
-        final File file = storage.read(filename);
+        final File file = versionManager.read(filename);
         return file.getLocations();
     }
 
@@ -100,7 +101,8 @@ public class RestController {
      */
     @PutMapping("/file/{filename:.+}")
     public @ResponseBody boolean create(@PathVariable String filename, @RequestBody byte[] data) {
-        return storage.create(filename, data);
+    	//TODO do we need to give raid type as a parameter or will the filename include raid type as prefix?
+        return versionManager.create(filename, data, Storage.RAID1);
     }
 
     /**
@@ -120,7 +122,7 @@ public class RestController {
      */
     @DeleteMapping("/file/{filename:.+}")
     public @ResponseBody boolean delete(@PathVariable String filename) throws ItemMissingException {
-        return storage.delete(filename);
+        return versionManager.delete(filename);
     }
 
 }
