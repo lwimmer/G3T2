@@ -53,8 +53,14 @@
             </thead>
             <tbody>
             <tr ng-repeat="nr in versions.versions">
-            	<td>{{name[1]}}</td>	
+            	<td>{{filename}}</td>	
                 <td>{{nr}}</td>
+                <td>
+                	<a href="/file/{{name[1]}}" class="btn btn-success btn-sm">
+						<span class="glyphicon glyphicon-download-alt"></span>
+						<span class="hidden-xs hidden-sm">Download</span>
+					</a>  
+                </td>
                </tr>
             </tbody>
         </table>

@@ -4,6 +4,7 @@
     	
         $http.get("/file").then(function(response) {
             $scope.files = response.data;
+            console.log(response.data);
         }, function errorCallback(response) {
         	alert("Reading files failed");
         	console.log(response.data);
