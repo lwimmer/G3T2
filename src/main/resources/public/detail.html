@@ -34,6 +34,7 @@
         <div ng-repeat="location in versions.locations">
         <dd>
         	<span>{{location.blobstore}}</span>
+        	<span>{{location.filename}}</span>
         	<span class="text-success" ng-if="!location.original">parity</span>
         	<span class="text-info" ng-if="location.recovered">recovered</span>
         </dd> 
