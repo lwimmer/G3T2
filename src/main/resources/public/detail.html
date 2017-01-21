@@ -52,11 +52,11 @@
                 </tr>
             </thead>
             <tbody>
-            <tr ng-repeat="nr in versions.versions">
+            <tr ng-repeat="nr in versions.versions | orderBy : '' : true">
             	<td>{{filename}}</td>	
                 <td>{{nr}}</td>
                 <td>
-                	<a href="/file/{{name[1]}}" class="btn btn-success btn-sm">
+                	<a href="/file/{{filename}}?v={{nr}}" class="btn btn-success btn-sm">
 						<span class="glyphicon glyphicon-download-alt"></span>
 						<span class="hidden-xs hidden-sm">Download</span>
 					</a>  
