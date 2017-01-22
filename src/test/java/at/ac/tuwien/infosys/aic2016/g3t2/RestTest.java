@@ -164,7 +164,7 @@ public class RestTest {
     }
     
     private FileMetadata getFileMetadata(String filename) throws Exception {
-        String data = mm.perform(get(getUrl(filename) + "/locations")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String data = mm.perform(get(getUrl(filename) + "/metadata")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return om.readValue(data, FileMetadata.class);
     }
     
