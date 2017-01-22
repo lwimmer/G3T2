@@ -11,7 +11,7 @@
 	<description>AIC 2016; Group 3; Topic 2: Cloud-based RAID Storage</description>
 	
 	<scm>
-		<developerConnection>scm:git:ssh://git@hyde.infosys.tuwien.ac.at:aic2016/G3T2.git</developerConnection>
+		<developerConnection>scm:git:ssh://git@hyde.infosys.tuwien.ac.at/aic2016/G3T2.git</developerConnection>
 	</scm>
 
 	<parent>
