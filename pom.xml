@@ -4,7 +4,7 @@
 
 	<groupId>at.ac.tuwien.infosys.aic2016.g3t2</groupId>
 	<artifactId>aic2016-g3t2</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>aic2016-g3t2</name>
@@ -12,7 +12,8 @@
 	
 	<scm>
 		<developerConnection>scm:git:ssh://git@hyde.infosys.tuwien.ac.at/aic2016/G3T2.git</developerConnection>
-	</scm>
+	  <tag>HEAD</tag>
+  </scm>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
