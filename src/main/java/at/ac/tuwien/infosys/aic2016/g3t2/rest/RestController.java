@@ -64,9 +64,13 @@ public class RestController {
      *            the name of the file to get
      * @param v
      *            the version of the file to get
+     * @param response
+     *            the HttpServletResponse response to set the headers       
      * @return the raw file contents
      * @throws ItemMissingException
      *             if the file was not found
+     * @throws UserinteractionRequiredException
+     *             if there is an error which cannot be handled automatically
      */
     @GetMapping("/file/{filename:.+}")
     public @ResponseBody byte[] read(@PathVariable String filename,
@@ -109,6 +113,8 @@ public class RestController {
      * @return a list of {@link Location}s
      * @throws ItemMissingException
      *             if the file was not found
+     * @throws UserinteractionRequiredException
+     *             if there is an error which cannot be handled automatically
      */
     @GetMapping("/file/{filename:.+}/metadata")
     public @ResponseBody FileMetadata getMetadata(@PathVariable String filename,

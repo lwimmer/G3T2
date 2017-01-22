@@ -27,6 +27,7 @@ public interface IRAID {
      *
      * @param storagefilename Name of the file
      * @return true if successfully deleted
+     * @throws ItemMissingException if the item is missing
      */
     boolean delete(String storagefilename) throws ItemMissingException;
 
@@ -35,6 +36,8 @@ public interface IRAID {
      *
      * @param storagefilename Name of the file
      * @return the file as File
+     * @throws ItemMissingException if the item is missing
+     * @throws UserinteractionRequiredException if there is an error which cannot be handled automatically
      */
     File read(String storagefilename) throws ItemMissingException, UserinteractionRequiredException;
 

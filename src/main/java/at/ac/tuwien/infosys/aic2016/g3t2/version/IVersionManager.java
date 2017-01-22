@@ -26,6 +26,8 @@ public interface IVersionManager extends IRAID {
      * @param filename name of the file
      * @param version version of the file
      * @return the file as File
+     * @throws ItemMissingException if the item is missing
+     * @throws UserinteractionRequiredException if there is an error which cannot be handled automatically
      */
 	File read(String filename, int version) throws ItemMissingException, UserinteractionRequiredException;
 
@@ -34,6 +36,7 @@ public interface IVersionManager extends IRAID {
      *
      * @param filename name of the file
      * @return list of versions as Integer
+     * @throws ItemMissingException if the item is missing 
      */
 	List<Integer> getFileVersions(String filename) throws ItemMissingException;
 
@@ -42,6 +45,7 @@ public interface IVersionManager extends IRAID {
      *
      * @param filename name of the file
      * @return the last version of the file as int
+     * @throws ItemMissingException if the item is missing
      */
 	int getLastVersion(String filename) throws ItemMissingException;
 

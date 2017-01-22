@@ -57,7 +57,7 @@ public class FileMetadata {
 	
 	/**
 	 * Sets list of versions
-	 * @param list of versions
+	 * @param versions list of versions
 	 */
 	public void setVersions(List<Integer> versions) {
 		this.versions = versions;

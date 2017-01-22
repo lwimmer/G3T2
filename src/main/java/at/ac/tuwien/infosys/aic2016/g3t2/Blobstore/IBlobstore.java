@@ -24,6 +24,7 @@ public interface IBlobstore {
      *
      * @param blobname name of the item
      * @return true if sucessfully deleted
+     * @throws ItemMissingException if the item is missing
      */
     boolean delete(String blobname) throws ItemMissingException;
 
@@ -32,6 +33,7 @@ public interface IBlobstore {
      *
      * @param blobname name of the item
      * @return the item as a Blob
+     * @throws ItemMissingException if the item is missing
      */
     Blob read(String blobname) throws ItemMissingException;
 
